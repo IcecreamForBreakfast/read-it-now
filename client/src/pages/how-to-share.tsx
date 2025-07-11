@@ -4,10 +4,21 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Smartphone, Globe, Copy, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 
 export default function HowToSharePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Fetch user's API key securely
+  const { data: userData } = useQuery({
+    queryKey: ["/api/auth/me"],
+    enabled: !!user,
+  });
+  
+  const apiKey = userData?.user?.apiKey;
 
   const handleBack = () => {
     setLocation("/dashboard");
@@ -70,20 +81,28 @@ export default function HowToSharePage() {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold mb-2">Step 1: Get Your API Key</h4>
-                <div className="bg-amber-50 p-4 rounded-lg mb-4">
-                  <p className="text-amber-800 text-sm">
-                    🔑 Your API Key: <code className="font-mono bg-amber-100 px-2 py-1 rounded text-xs">ril_46219cbzc71x4b8dxdd97x73cc546x21</code>
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard("ril_46219cbzc71x4b8dxdd97x73cc546x21", "API Key")}
-                    className="mt-2"
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy API Key
-                  </Button>
-                </div>
+                {apiKey ? (
+                  <div className="bg-amber-50 p-4 rounded-lg mb-4">
+                    <p className="text-amber-800 text-sm">
+                      🔑 Your API Key: <code className="font-mono bg-amber-100 px-2 py-1 rounded text-xs">{apiKey}</code>
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(apiKey, "API Key")}
+                      className="mt-2"
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy API Key
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <p className="text-blue-800 text-sm">
+                      Go to the "API Key" tab in your dashboard to generate your secure API key first.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -126,17 +145,19 @@ export default function HowToSharePage() {
                     <strong>Headers:</strong>
                     <div className="mt-1 font-mono text-xs space-y-1">
                       <div>Content-Type: application/json</div>
-                      <div>Authorization: Bearer ril_46219cbzc71x4b8dxdd97x73cc546x21</div>
+                      <div>Authorization: Bearer {apiKey || 'YOUR_API_KEY_HERE'}</div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => copyToClipboard('Content-Type: application/json\nAuthorization: Bearer ril_46219cbzc71x4b8dxdd97x73cc546x21', "Headers")}
-                    >
-                      <Copy className="h-3 w-3 mr-1" />
-                      Copy Headers
-                    </Button>
+                    {apiKey && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => copyToClipboard(`Content-Type: application/json\nAuthorization: Bearer ${apiKey}`, "Headers")}
+                      >
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy Headers
+                      </Button>
+                    )}
                   </div>
                   <div className="bg-slate-100 p-3 rounded">
                     <strong>Request Body:</strong> JSON

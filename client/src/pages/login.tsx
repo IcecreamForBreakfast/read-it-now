@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showMagicLink, setShowMagicLink] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const { login, sendMagicLink, user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -33,6 +34,42 @@ export default function LoginPage() {
     } catch (error) {
       toast({
         title: "Login failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Registration failed");
+      }
+
+      const data = await response.json();
+      toast({
+        title: "Account created",
+        description: "Welcome to Read It Later!",
+      });
+      
+      // Auto-login after registration
+      await login(email, password);
+    } catch (error) {
+      toast({
+        title: "Registration failed",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
@@ -75,53 +112,64 @@ export default function LoginPage() {
           </div>
 
           {!showMagicLink ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
+            <div className="space-y-6">
+              <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
+                <div>
+                  <Label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isRegistering ? "Creating account..." : "Signing in..."}
+                    </>
+                  ) : (
+                    isRegistering ? "Create Account" : "Sign In"
+                  )}
+                </Button>
+              </form>
 
-              <div className="text-center">
+              <div className="text-center space-y-2">
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={() => setIsRegistering(!isRegistering)}
+                  className="text-primary hover:text-blue-700 text-sm font-medium"
+                >
+                  {isRegistering ? "Already have an account? Sign in" : "Don't have an account? Create one"}
+                </Button>
+                <br />
                 <Button
                   type="button"
                   variant="link"
@@ -131,7 +179,7 @@ export default function LoginPage() {
                   Send Magic Link Instead
                 </Button>
               </div>
-            </form>
+            </div>
           ) : (
             <form onSubmit={handleMagicLink} className="space-y-6">
               <div>

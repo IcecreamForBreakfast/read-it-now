@@ -22,12 +22,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      sameSite: "strict", // CSRF protection
+      sameSite: "lax", // Better compatibility while still secure
     },
   }));
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('Session check:', {
+      sessionId: req.session?.id,
+      userId: req.session?.userId,
+      cookies: req.headers.cookie
+    });
+    
     if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }

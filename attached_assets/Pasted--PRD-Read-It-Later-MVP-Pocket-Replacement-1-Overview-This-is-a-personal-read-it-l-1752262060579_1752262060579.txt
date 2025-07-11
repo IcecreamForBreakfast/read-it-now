@@ -1,0 +1,87 @@
+# 📄 PRD: **Read-It-Later MVP** (Pocket Replacement)
+
+## 1. 📌 Overview
+This is a personal read-it-later app designed for one user (me). It will replace Pocket, allowing me to save articles via the iOS share menu (via browser bookmarklet or iOS shortcut), access them on any device, and read them in a clean format. A basic tagging system will be in place, with auto-tagging and advanced features coming later.
+
+## 2. 🎯 Goals
+- ✅ Save articles from iOS and desktop browsers
+- ✅ Access saved articles in a responsive web app
+- ✅ Display article title, domain, date saved, and editable tag
+- ✅ Read articles in a clean “reader” view
+- ✅ Filter articles by tag
+- ✅ Support login to sync articles across devices
+
+## 3. 🧑‍💻 User Stories (Me)
+- As a user, I want to **save articles from Safari or Chrome** on iOS and desktop
+- As a user, I want to **log in once and see all my saved articles**
+- As a user, I want to **view article title, domain, and tag in a list**
+- As a user, I want to **read a clean, distraction-free version of the article**
+- As a user, I want to **filter articles by tag**
+- As a user, I want to **manually edit a tag**
+
+## 4. 🧱 Functional Requirements
+
+### 4.1. Save Workflow
+- ✅ Accept input from iOS share menu via shortcut/bookmarklet (inputs URL)
+- ✅ Store metadata (URL, title, domain, timestamp)
+- 🚫 MVP does *not* include auto-tagging
+
+### 4.2. Article List View
+- Responsive list of saved articles, sorted newest → oldest
+- Each article card shows:
+  - Title
+  - Domain (e.g., *nytimes.com*)
+  - Date saved
+  - Tag (default = “untagged”, editable)
+- Tag filters shown at top; selecting filters the list
+- Infinite scroll (optional); no search or pagination in MVP
+
+### 4.3. Reader View
+- Clicking an article opens a clean reader view
+- Use basic content parsing (Mercury Parser or similar)
+- No offline caching
+
+### 4.4. Tag Editing
+- Tag shown as a simple inline field or dropdown
+- User can update tag manually
+- Tags are stored as string values (e.g., "work", "personal")
+
+### 4.5. Login / Sync
+- Simple auth (email/password or magic link)
+- Articles and user data stored in cloud DB (Supabase recommended for simplicity)
+
+## 5. 🧑‍🔧 Non-Functional Requirements
+- Works well on iPhone Safari and desktop Chrome
+- No native iOS build needed
+- Fast, minimal, clean UI (Tailwind recommended)
+- No backend server needed beyond DB and auth (Supabase or Firebase ideal)
+- Vibe-code friendly (no frameworks unless needed)
+
+## 6. 📐 Data Model (Initial)
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "string"
+  },
+  "article": {
+    "id": "uuid",
+    "userId": "uuid",
+    "url": "string",
+    "title": "string",
+    "domain": "string",
+    "savedAt": "timestamp",
+    "tag": "string" // "work", "personal", or editable
+  }
+}
+```
+
+## 7. ⛳️ Milestones
+
+| Milestone | Feature(s) Included |
+|----------|---------------------|
+| **MVP** | Save URL → View article list → Reader view → Manual tag editing → Tag filtering |
+| **M1** | Auto-tagging via LLM | e.g., OpenAI API based on title + domain |
+| **M2** | Search, sort, favorite, archive |
+| **M3** | Offline caching / PWA |
+| **M4** | Multi-tagging, bulk actions, keyboard shortcuts |

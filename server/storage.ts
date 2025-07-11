@@ -15,7 +15,9 @@ export interface IStorage {
   // User operations
   getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByApiKey(apiKey: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  generateApiKey(userId: string): Promise<string>;
   
   // Article operations
   getArticlesByUserId(userId: string, tag?: string): Promise<Article[]>;
@@ -39,9 +41,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getUserByApiKey(apiKey: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.apiKey, apiKey)).limit(1);
+    return result[0];
+  }
+
   async createUser(user: InsertUser): Promise<User> {
     const result = await db.insert(users).values(user).returning();
     return result[0];
+  }
+
+  async generateApiKey(userId: string): Promise<string> {
+    const apiKey = `ril_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    await db.update(users).set({ apiKey }).where(eq(users.id, userId));
+    return apiKey;
   }
 
   async getArticlesByUserId(userId: string, tag?: string): Promise<Article[]> {

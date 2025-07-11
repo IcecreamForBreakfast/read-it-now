@@ -69,7 +69,25 @@ export default function HowToSharePage() {
 
             <div className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Step 1: Create the Shortcut</h4>
+                <h4 className="font-semibold mb-2">Step 1: Get Your API Key</h4>
+                <div className="bg-amber-50 p-4 rounded-lg mb-4">
+                  <p className="text-amber-800 text-sm">
+                    🔑 Your API Key: <code className="font-mono bg-amber-100 px-2 py-1 rounded text-xs">ril_46219cbzc71x4b8dxdd97x73cc546x21</code>
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard("ril_46219cbzc71x4b8dxdd97x73cc546x21", "API Key")}
+                    className="mt-2"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy API Key
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Step 2: Create the Shortcut</h4>
                 <ol className="list-decimal list-inside space-y-2 text-slate-700">
                   <li>Open the <strong>Shortcuts</strong> app on your iPhone</li>
                   <li>Tap the <strong>+</strong> button to create a new shortcut</li>
@@ -90,12 +108,12 @@ export default function HowToSharePage() {
                 <p className="text-slate-700 mb-2">In the "Get Contents of URL" action, set:</p>
                 <div className="space-y-2">
                   <div className="bg-slate-100 p-3 rounded">
-                    <strong>URL:</strong> {currentDomain}/api/articles
+                    <strong>URL:</strong> {currentDomain}/api/save
                     <Button
                       variant="outline"
                       size="sm"
                       className="ml-2"
-                      onClick={() => copyToClipboard(`${currentDomain}/api/articles`, "API URL")}
+                      onClick={() => copyToClipboard(`${currentDomain}/api/save`, "API URL")}
                     >
                       <Copy className="h-3 w-3 mr-1" />
                       Copy
@@ -106,9 +124,19 @@ export default function HowToSharePage() {
                   </div>
                   <div className="bg-slate-100 p-3 rounded">
                     <strong>Headers:</strong>
-                    <div className="mt-1 font-mono text-xs">
-                      Content-Type: application/json
+                    <div className="mt-1 font-mono text-xs space-y-1">
+                      <div>Content-Type: application/json</div>
+                      <div>Authorization: Bearer ril_46219cbzc71x4b8dxdd97x73cc546x21</div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => copyToClipboard('Content-Type: application/json\nAuthorization: Bearer ril_46219cbzc71x4b8dxdd97x73cc546x21', "Headers")}
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy Headers
+                    </Button>
                   </div>
                   <div className="bg-slate-100 p-3 rounded">
                     <strong>Request Body:</strong> JSON
@@ -139,11 +167,11 @@ export default function HowToSharePage() {
               </div>
             </div>
 
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-amber-900 mb-2">Important Note</h4>
-              <p className="text-amber-800">
-                You'll need to be logged in to your Read-It-Later app in Safari for this to work. 
-                The shortcut uses your browser's login session.
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-2">✅ Ready to Use</h4>
+              <p className="text-green-800">
+                Your API key authentication is now configured! This shortcut will work from any app without needing to stay logged in. 
+                The API key provides secure access to your account.
               </p>
             </div>
           </CardContent>

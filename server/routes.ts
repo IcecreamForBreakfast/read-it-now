@@ -27,11 +27,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   // Authentication middleware
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ message: "Authentication required" });
+  const requireAuth = async (req: any, res: any, next: any) => {
+    // Check session auth first
+    if (req.session?.userId) {
+      return next();
     }
-    next();
+    
+    // Check API key auth
+    const apiKey = req.headers.authorization?.replace('Bearer ', '');
+    if (apiKey) {
+      try {
+        const user = await storage.getUserByApiKey(apiKey);
+        if (user) {
+          req.userId = user.id;
+          return next();
+        }
+      } catch (error) {
+        console.error('API key authentication error:', error);
+      }
+    }
+    
+    return res.status(401).json({ message: "Authentication required" });
   };
 
   // Auth routes
@@ -116,21 +132,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const user = await storage.getUserById(req.session.userId!);
+      const userId = req.session?.userId || req.userId;
+      const user = await storage.getUserById(userId!);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
-      res.json({ user: { id: user.id, email: user.email } });
+      res.json({ user: { id: user.id, email: user.email, apiKey: user.apiKey } });
     } catch (error) {
       res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+
+  // API key generation endpoint
+  app.post("/api/auth/generate-key", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session?.userId || req.userId;
+      const apiKey = await storage.generateApiKey(userId!);
+      res.json({ apiKey });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate API key" });
     }
   });
 
   // Article routes
   app.get("/api/articles", requireAuth, async (req, res) => {
     try {
+      const userId = req.session?.userId || req.userId;
       const tag = req.query.tag as string;
-      const articles = await storage.getArticlesByUserId(req.session.userId!, tag);
+      const articles = await storage.getArticlesByUserId(userId!, tag);
       res.json(articles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch articles" });
@@ -139,8 +168,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/articles/:id", requireAuth, async (req, res) => {
     try {
+      const userId = req.session?.userId || req.userId;
       const article = await storage.getArticleById(req.params.id);
-      if (!article || article.userId !== req.session.userId!) {
+      if (!article || article.userId !== userId!) {
         return res.status(404).json({ message: "Article not found" });
       }
       res.json(article);
@@ -152,13 +182,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/articles", requireAuth, async (req, res) => {
     try {
       const { url } = saveArticleSchema.parse(req.body);
+      const userId = req.session?.userId || req.userId;
       
       // Extract article content and metadata
       const { title, content } = await extractArticleContent(url);
       const domain = extractDomain(url);
       
       const article = await storage.createArticle({
-        userId: req.session.userId!,
+        userId: userId!,
         url,
         title,
         domain,
@@ -174,7 +205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/articles/:id", requireAuth, async (req, res) => {
     try {
-      const success = await storage.deleteArticle(req.params.id, req.session.userId!);
+      const userId = req.session?.userId || req.userId;
+      const success = await storage.deleteArticle(req.params.id, userId!);
       if (!success) {
         return res.status(404).json({ message: "Article not found" });
       }
@@ -186,8 +218,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
     try {
+      const userId = req.session?.userId || req.userId;
       const { tag } = req.body;
-      const article = await storage.updateArticleTag(req.params.id, req.session.userId!, tag);
+      const article = await storage.updateArticleTag(req.params.id, userId!, tag);
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
       }
@@ -199,7 +232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {
-      const tags = await storage.getTagsByUserId(req.session.userId!);
+      const userId = req.session?.userId || req.userId;
+      const tags = await storage.getTagsByUserId(userId!);
       res.json(tags);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tags" });
@@ -210,13 +244,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/save", requireAuth, async (req, res) => {
     try {
       const { url } = saveArticleSchema.parse(req.body);
+      const userId = req.session?.userId || req.userId;
       
       // Extract article content and metadata
       const { title, content } = await extractArticleContent(url);
       const domain = extractDomain(url);
       
       const article = await storage.createArticle({
-        userId: req.session.userId!,
+        userId: userId!,
         url,
         title,
         domain,

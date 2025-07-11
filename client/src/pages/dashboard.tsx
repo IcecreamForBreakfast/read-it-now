@@ -5,9 +5,11 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article-card";
+import { ApiKeyManager } from "@/components/api-key-manager";
 import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Smartphone } from "lucide-react";
+import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Smartphone, Key } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import type { Article } from "@shared/schema";
 
@@ -177,86 +179,101 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters Section */}
-        <div className="mb-8">
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <h2 className="text-lg font-semibold text-slate-800">Your Articles</h2>
-            <div className="flex-1"></div>
-            <Button
-              onClick={() => setShowSaveModal(true)}
-              className="bg-primary text-white hover:bg-blue-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Save Article
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowInstructions(true)}
-              className="text-primary border-primary hover:bg-primary hover:text-white"
-            >
-              How to Save
-            </Button>
-          </div>
+        <Tabs defaultValue="articles" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="articles">Articles</TabsTrigger>
+            <TabsTrigger value="api-key">API Key</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="articles" className="mt-6">
+            {/* Filters Section */}
+            <div className="mb-8">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <h2 className="text-lg font-semibold text-slate-800">Your Articles</h2>
+                <div className="flex-1"></div>
+                <Button
+                  onClick={() => setShowSaveModal(true)}
+                  className="bg-primary text-white hover:bg-blue-700"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Save Article
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInstructions(true)}
+                  className="text-primary border-primary hover:bg-primary hover:text-white"
+                >
+                  How to Save
+                </Button>
+              </div>
 
-          <div className="flex flex-wrap gap-2">
-            {uniqueTags.map((tag) => (
-              <Button
-                key={tag}
-                variant={activeFilter === tag ? "default" : "secondary"}
-                size="sm"
-                onClick={() => setActiveFilter(tag)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-colors
-                  ${activeFilter === tag 
-                    ? "bg-primary text-white hover:bg-blue-700" 
-                    : getTagColor(tag) + " hover:bg-slate-300"
-                  }
-                `}
-              >
-                {tag === "all" ? "All Articles" : tag}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Articles Grid */}
-        {articlesLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : articlesError ? (
-          <div className="text-center py-12">
-            <p className="text-red-600">Failed to load articles</p>
-          </div>
-        ) : filteredArticles.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Bookmark className="text-slate-400 text-xl" />
+              <div className="flex flex-wrap gap-2">
+                {uniqueTags.map((tag) => (
+                  <Button
+                    key={tag}
+                    variant={activeFilter === tag ? "default" : "secondary"}
+                    size="sm"
+                    onClick={() => setActiveFilter(tag)}
+                    className={`
+                      px-4 py-2 rounded-full text-sm font-medium transition-colors
+                      ${activeFilter === tag 
+                        ? "bg-primary text-white hover:bg-blue-700" 
+                        : getTagColor(tag) + " hover:bg-slate-300"
+                      }
+                    `}
+                  >
+                    {tag === "all" ? "All Articles" : tag}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">No articles found</h3>
-            <p className="text-slate-600 mb-6">
-              {activeFilter === "all" 
-                ? "Save some articles to get started."
-                : "No articles found with this tag."}
-            </p>
-            <Button
-              onClick={() => setShowInstructions(true)}
-              className="bg-primary text-white hover:bg-blue-700"
-            >
-              Learn How to Save Articles
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredArticles.map((article: Article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                onDelete={handleDeleteArticle}
-              />
-            ))}
-          </div>
-        )}
+
+            {/* Articles Grid */}
+            {articlesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : articlesError ? (
+              <div className="text-center py-12">
+                <p className="text-red-600">Failed to load articles</p>
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bookmark className="text-slate-400 text-xl" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">No articles found</h3>
+                <p className="text-slate-600 mb-6">
+                  {activeFilter === "all" 
+                    ? "Save some articles to get started."
+                    : "No articles found with this tag."}
+                </p>
+                <Button
+                  onClick={() => setShowInstructions(true)}
+                  className="bg-primary text-white hover:bg-blue-700"
+                >
+                  Learn How to Save Articles
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles.map((article: Article) => (
+                  <ArticleCard
+                    key={article.id}
+                    article={article}
+                    onDelete={handleDeleteArticle}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="api-key" className="mt-6">
+            <div className="max-w-2xl">
+              <ApiKeyManager />
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Save Article Modal */}

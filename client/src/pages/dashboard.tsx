@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article-card";
 import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Plus, LogOut, HelpCircle, Loader2 } from "lucide-react";
+import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Smartphone } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Article } from "@shared/schema";
 
@@ -26,6 +26,18 @@ export default function Dashboard() {
       setLocation("/");
     }
   }, [user, setLocation]);
+
+  // Check for save URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const saveParam = params.get('save');
+    if (saveParam) {
+      setSaveUrl(decodeURIComponent(saveParam));
+      setShowSaveModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, []);
 
   const {
     data: articles = [],
@@ -133,6 +145,15 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/how-to-share")}
+                className="text-slate-600 hover:text-slate-800"
+              >
+                <Smartphone className="h-4 w-4 mr-2" />
+                iOS Setup
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

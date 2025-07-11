@@ -4,6 +4,15 @@
 
 This is a personal read-it-later application built as a Pocket replacement. It's a full-stack web application that allows users to save articles from iOS and desktop browsers, view them in a clean reader interface, and organize them with tags. The application is designed for single-user use with authentication to sync articles across devices.
 
+## Recent Changes
+
+**January 2025:**
+- ✅ Fixed critical session authentication issue - sessions now persist properly across requests
+- ✅ Improved article content parsing with proper paragraph formatting
+- ✅ Enhanced error handling for blocked websites with user-friendly messages
+- ✅ Reader view now displays articles with proper line breaks and typography
+- ✅ All core functionality working: user registration, login, article saving, and reading
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

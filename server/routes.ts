@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const user = await storage.getUserById(req.session.userId);
+      const user = await storage.getUserById(req.session.userId!);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/articles", requireAuth, async (req, res) => {
     try {
       const tag = req.query.tag as string;
-      const articles = await storage.getArticlesByUserId(req.session.userId, tag);
+      const articles = await storage.getArticlesByUserId(req.session.userId!, tag);
       res.json(articles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch articles" });
@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/articles/:id", requireAuth, async (req, res) => {
     try {
       const article = await storage.getArticleById(req.params.id);
-      if (!article || article.userId !== req.session.userId) {
+      if (!article || article.userId !== req.session.userId!) {
         return res.status(404).json({ message: "Article not found" });
       }
       res.json(article);
@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const domain = extractDomain(url);
       
       const article = await storage.createArticle({
-        userId: req.session.userId,
+        userId: req.session.userId!,
         url,
         title,
         domain,
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/articles/:id", requireAuth, async (req, res) => {
     try {
-      const success = await storage.deleteArticle(req.params.id, req.session.userId);
+      const success = await storage.deleteArticle(req.params.id, req.session.userId!);
       if (!success) {
         return res.status(404).json({ message: "Article not found" });
       }
@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
     try {
       const { tag } = req.body;
-      const article = await storage.updateArticleTag(req.params.id, req.session.userId, tag);
+      const article = await storage.updateArticleTag(req.params.id, req.session.userId!, tag);
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
       }
@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {
-      const tags = await storage.getTagsByUserId(req.session.userId);
+      const tags = await storage.getTagsByUserId(req.session.userId!);
       res.json(tags);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tags" });
@@ -203,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const domain = extractDomain(url);
       
       const article = await storage.createArticle({
-        userId: req.session.userId,
+        userId: req.session.userId!,
         url,
         title,
         domain,

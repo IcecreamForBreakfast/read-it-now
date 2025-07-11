@@ -112,7 +112,7 @@
 }
 
 .prose a {
-  @apply text-primary hover:text-primary/80 underline;
+  @apply text-primary hover:text-blue-600 underline;
 }
 
 .prose code {

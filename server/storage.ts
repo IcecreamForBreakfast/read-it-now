@@ -45,14 +45,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getArticlesByUserId(userId: string, tag?: string): Promise<Article[]> {
-    let query = db.select().from(articles).where(eq(articles.userId, userId));
-    
     if (tag && tag !== "all") {
-      query = query.where(and(eq(articles.userId, userId), eq(articles.tag, tag)));
+      const result = await db
+        .select()
+        .from(articles)
+        .where(and(eq(articles.userId, userId), eq(articles.tag, tag)))
+        .orderBy(desc(articles.savedAt));
+      return result;
+    } else {
+      const result = await db
+        .select()
+        .from(articles)
+        .where(eq(articles.userId, userId))
+        .orderBy(desc(articles.savedAt));
+      return result;
     }
-    
-    const result = await query.orderBy(desc(articles.savedAt));
-    return result;
   }
 
   async getArticleById(id: string): Promise<Article | undefined> {
@@ -67,7 +74,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteArticle(id: string, userId: string): Promise<boolean> {
     const result = await db.delete(articles).where(and(eq(articles.id, id), eq(articles.userId, userId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async updateArticleTag(id: string, userId: string, tag: string): Promise<Article | undefined> {

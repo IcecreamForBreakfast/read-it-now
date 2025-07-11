@@ -18,12 +18,21 @@ export async function extractArticleContent(url: string): Promise<ArticleContent
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive'
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch article: ${response.status}`);
+      // Return a more user-friendly error message for blocked sites
+      const domain = extractDomain(url);
+      return {
+        title: `Article from ${domain}`,
+        content: `This article couldn't be automatically extracted because the website (${domain}) blocked our request.\n\nYou can still read the original article by clicking the "View Original" link above.`
+      };
     }
     
     const html = await response.text();
@@ -99,9 +108,10 @@ export async function extractArticleContent(url: string): Promise<ArticleContent
     
   } catch (error) {
     console.error('Error extracting article content:', error);
+    const domain = extractDomain(url);
     return {
-      title: extractDomain(url),
-      content: `Failed to extract content from ${url}`
+      title: `Article from ${domain}`,
+      content: `This article couldn't be automatically extracted from ${domain}.\n\nThis might be because:\n• The website blocks automated requests\n• The site requires JavaScript to load content\n• The content is behind a paywall\n\nYou can still read the original article by clicking the "View Original" link above.`
     };
   }
 }

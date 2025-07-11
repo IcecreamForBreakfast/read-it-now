@@ -180,10 +180,14 @@ export default function ReaderPage() {
         {/* Article Content */}
         <Card>
           <CardContent className="p-8">
-            <div className="prose prose-slate max-w-none">
+            <div className="prose prose-slate prose-lg max-w-none">
               {article.content ? (
-                <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
-                  {article.content}
+                <div className="text-slate-700 leading-relaxed">
+                  {article.content.split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="mb-4 text-base leading-7">
+                      {paragraph.trim()}
+                    </p>
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-slate-500">

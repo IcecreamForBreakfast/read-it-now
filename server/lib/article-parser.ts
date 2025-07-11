@@ -84,8 +84,8 @@ export async function extractArticleContent(url: string): Promise<ArticleContent
       content = textContent || contentElement.textContent?.trim() || '';
     }
     
-    // Clean up content
-    content = content.replace(/\s+/g, ' ').trim();
+    // Clean up content but preserve paragraph breaks
+    content = content.replace(/[ \t]+/g, ' ').trim();
     
     // Limit content length for storage
     if (content.length > 10000) {

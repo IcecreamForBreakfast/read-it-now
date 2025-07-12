@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { queryClient } from "@/lib/queryClient";
 
 interface User {
   id: string;
@@ -25,32 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: authData, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-        
-        if (res.status === 401) {
-          return null;
-        }
-        
-        if (!res.ok) {
-          throw new Error(`${res.status}: ${res.statusText}`);
-        }
-        
-        return await res.json();
-      } catch (error) {
-        return null;
-      }
-    },
+    enabled: !user,
   });
 
   useEffect(() => {
     if (authData?.user) {
       setUser(authData.user);
+      setLocation("/dashboard");
     }
-  }, [authData]);
+  }, [authData, setLocation]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch("/api/auth/login", {
@@ -59,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
       credentials: "include",
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || "Login failed");
@@ -67,8 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const data = await response.json();
     setUser(data.user);
-    // Invalidate the auth query to refetch user data
-    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     setLocation("/dashboard");
   };
 

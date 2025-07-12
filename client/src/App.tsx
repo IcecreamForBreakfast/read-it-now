@@ -7,7 +7,6 @@ import { AuthProvider } from "@/components/auth-provider";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import ReaderPage from "@/pages/reader";
-import HowToSharePage from "@/pages/how-to-share";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,7 +15,6 @@ function Router() {
       <Route path="/" component={LoginPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/reader/:id" component={ReaderPage} />
-      <Route path="/how-to-share" component={HowToSharePage} />
       <Route component={NotFound} />
     </Switch>
   );

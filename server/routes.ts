@@ -1,63 +1,37 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema, type User } from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import { neon } from "@neondatabase/serverless";
+import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 
-const PgSession = connectPgSimple(session);
+declare module "express-session" {
+  interface SessionData {
+    userId: string;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session configuration
-  const sql = neon(process.env.DATABASE_URL!);
-  
   app.use(session({
-    store: new PgSession({
-      pool: sql as any,
-      tableName: 'session',
-      createTableIfMissing: true,
-    }),
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || "read-it-later-secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: "lax", // Better compatibility while still secure
     },
   }));
 
   // Authentication middleware
-  const requireAuth = async (req: any, res: any, next: any) => {
-    try {
-      // Check session authentication first
-      if (req.session?.userId) {
-        req.userId = req.session.userId;
-        return next();
-      }
-      
-      // Check API key auth as fallback
-      const apiKey = req.headers.authorization?.replace('Bearer ', '');
-      if (apiKey) {
-        try {
-          const user = await storage.getUserByApiKey(apiKey);
-          if (user) {
-            req.userId = user.id;
-            return next();
-          }
-        } catch (error) {
-          console.error('API key authentication error:', error);
-        }
-      }
-      
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
-    } catch (error) {
-      console.error('Auth middleware error:', error);
-      return res.status(500).json({ message: "Authentication error" });
     }
+    next();
   };
 
   // Auth routes
@@ -79,10 +53,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
       });
 
-      // Set session
       req.session.userId = user.id;
-      
-      res.json({ user: { id: user.id, email: user.email } });
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        res.json({ user: { id: user.id, email: user.email } });
+      });
     } catch (error) {
       res.status(400).json({ message: error instanceof Error ? error.message : "Registration failed" });
     }
@@ -102,10 +80,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Set session
       req.session.userId = user.id;
-      
-      res.json({ user: { id: user.id, email: user.email } });
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        res.json({ user: { id: user.id, email: user.email } });
+      });
     } catch (error) {
       res.status(400).json({ message: error instanceof Error ? error.message : "Login failed" });
     }
@@ -126,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
-        return res.status(500).json({ message: "Could not log out" });
+        return res.status(500).json({ message: "Logout failed" });
       }
       res.json({ message: "Logged out successfully" });
     });
@@ -134,119 +116,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const user = await storage.getUserById(userId!);
+      const user = await storage.getUserById(req.session.userId!);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
-      res.json({ user: { id: user.id, email: user.email, apiKey: user.apiKey } });
+      res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Failed to get user" });
     }
   });
 
   // Article routes
   app.get("/api/articles", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
       const tag = req.query.tag as string;
-      const articles = await storage.getArticlesByUserId(userId!, tag);
+      const articles = await storage.getArticlesByUserId(req.session.userId!, tag);
       res.json(articles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch articles" });
     }
   });
 
+  app.get("/api/articles/:id", requireAuth, async (req, res) => {
+    try {
+      const article = await storage.getArticleById(req.params.id);
+      if (!article || article.userId !== req.session.userId!) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      res.json(article);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch article" });
+    }
+  });
+
   app.post("/api/articles", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const { url, tag } = saveArticleSchema.parse(req.body);
+      const { url } = saveArticleSchema.parse(req.body);
       
-      try {
-        const { title, content } = await extractArticleContent(url);
-        const domain = extractDomain(url);
-        
-        const article = await storage.createArticle({
-          userId: userId!,
-          url,
-          title,
-          content,
-          domain,
-          tag: tag || null,
-        });
-        
-        res.json(article);
-      } catch (parseError) {
-        // If content extraction fails, save with basic info
-        const domain = extractDomain(url);
-        const article = await storage.createArticle({
-          userId: userId!,
-          url,
-          title: url,
-          content: "Could not extract content from this URL. It may be behind a paywall or blocked.",
-          domain,
-          tag: tag || null,
-        });
-        
-        res.json(article);
-      }
+      // Extract article content and metadata
+      const { title, content } = await extractArticleContent(url);
+      const domain = extractDomain(url);
+      
+      const article = await storage.createArticle({
+        userId: req.session.userId!,
+        url,
+        title,
+        domain,
+        content,
+        tag: "untagged",
+      });
+      
+      res.json(article);
     } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to save article" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to save article" });
     }
   });
 
   app.delete("/api/articles/:id", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const { id } = req.params;
-      
-      const success = await storage.deleteArticle(id, userId!);
+      const success = await storage.deleteArticle(req.params.id, req.session.userId!);
       if (!success) {
         return res.status(404).json({ message: "Article not found" });
       }
-      
       res.json({ message: "Article deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete article" });
     }
   });
 
-  app.patch("/api/articles/:id", requireAuth, async (req, res) => {
+  app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const { id } = req.params;
       const { tag } = req.body;
-      
-      const article = await storage.updateArticleTag(id, userId!, tag);
+      const article = await storage.updateArticleTag(req.params.id, req.session.userId!, tag);
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
       }
-      
       res.json(article);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update article" });
+      res.status(500).json({ message: "Failed to update article tag" });
     }
   });
 
-  // Tag routes
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const tags = await storage.getTagsByUserId(userId!);
+      const tags = await storage.getTagsByUserId(req.session.userId!);
       res.json(tags);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tags" });
     }
   });
 
-  // API key management
-  app.post("/api/auth/generate-api-key", requireAuth, async (req, res) => {
+  // iOS sharing endpoint
+  app.post("/api/save", requireAuth, async (req, res) => {
     try {
-      const userId = req.userId;
-      const apiKey = await storage.generateApiKey(userId!);
-      res.json({ apiKey });
+      const { url } = saveArticleSchema.parse(req.body);
+      
+      // Extract article content and metadata
+      const { title, content } = await extractArticleContent(url);
+      const domain = extractDomain(url);
+      
+      const article = await storage.createArticle({
+        userId: req.session.userId!,
+        url,
+        title,
+        domain,
+        content,
+        tag: "untagged",
+      });
+      
+      res.json({ success: true, article });
     } catch (error) {
-      res.status(500).json({ message: "Failed to generate API key" });
+      res.status(500).json({ success: false, message: error instanceof Error ? error.message : "Failed to save article" });
     }
   });
 

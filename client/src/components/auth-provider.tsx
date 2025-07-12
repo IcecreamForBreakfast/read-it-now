@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 interface User {
   id: string;
@@ -24,15 +25,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: authData, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+        
+        if (res.status === 401) {
+          return null;
+        }
+        
+        if (!res.ok) {
+          throw new Error(`${res.status}: ${res.statusText}`);
+        }
+        
+        return await res.json();
+      } catch (error) {
+        console.log("Auth check failed:", error);
+        return null;
+      }
+    },
   });
 
   useEffect(() => {
+    console.log("Auth data changed:", authData);
     if (authData?.user) {
+      console.log("Setting user from auth data:", authData.user);
       setUser(authData.user);
     }
   }, [authData]);
 
   const login = async (email: string, password: string) => {
+    console.log("Attempting login for:", email);
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,13 +64,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       credentials: "include",
     });
 
+    console.log("Login response status:", response.status);
+    
     if (!response.ok) {
       const error = await response.json();
+      console.log("Login error:", error);
       throw new Error(error.message || "Login failed");
     }
 
     const data = await response.json();
+    console.log("Login successful:", data);
     setUser(data.user);
+    // Invalidate the auth query to refetch user data
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     setLocation("/dashboard");
   };
 

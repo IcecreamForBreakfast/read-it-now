@@ -24,10 +24,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     timestamp: new Date().toISOString()
   });
   
+  // Use PostgreSQL session store
+  const pgSession = connectPgSimple(session);
+  const sql = neon(process.env.DATABASE_URL!);
+  
   app.use(session({
+    store: new pgSession({
+      pool: sql as any,
+      tableName: 'session',
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
-    resave: true, // Force session to be saved
-    saveUninitialized: true, // Allow uninitialized sessions
+    resave: false, // Don't save session if unmodified
+    saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId',
     cookie: {
       secure: false, // Keep false for both dev and prod

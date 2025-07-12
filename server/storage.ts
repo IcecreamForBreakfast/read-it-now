@@ -15,7 +15,9 @@ export interface IStorage {
   // User operations
   getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  generatePersonalToken(userId: string): Promise<string>;
   
   // Article operations
   getArticlesByUserId(userId: string, tag?: string): Promise<Article[]>;
@@ -39,9 +41,27 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getUserByToken(token: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.personalToken, token)).limit(1);
+    return result[0];
+  }
+
   async createUser(user: InsertUser): Promise<User> {
     const result = await db.insert(users).values(user).returning();
     return result[0];
+  }
+
+  async generatePersonalToken(userId: string): Promise<string> {
+    // Generate a secure random token
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(24)), byte => 
+      byte.toString(16).padStart(2, '0')
+    ).join('');
+    
+    await db.update(users)
+      .set({ personalToken: token })
+      .where(eq(users.id, userId));
+    
+    return token;
   }
 
   async getArticlesByUserId(userId: string, tag?: string): Promise<Article[]> {

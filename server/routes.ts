@@ -34,6 +34,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Token sharing endpoint
+  app.post("/api/save/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { url } = saveArticleSchema.parse(req.body);
+      
+      // Find user by token
+      const user = await storage.getUserByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+      
+      // Extract article content
+      const domain = extractDomain(url);
+      const articleContent = await extractArticleContent(url);
+      
+      // Save article
+      const article = await storage.createArticle({
+        userId: user.id,
+        url,
+        title: articleContent.title,
+        domain,
+        content: articleContent.content,
+        tag: "untagged"
+      });
+      
+      res.json({ message: "Article saved successfully", article: { id: article.id, title: article.title } });
+    } catch (error) {
+      console.error('Error saving article via token:', error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to save article" });
+    }
+  });
+
+  // Token management endpoint
+  app.post("/api/generate-token", requireAuth, async (req, res) => {
+    try {
+      const token = await storage.generatePersonalToken(req.session.userId!);
+      res.json({ token });
+    } catch (error) {
+      console.error('Error generating token:', error);
+      res.status(500).json({ message: "Failed to generate token" });
+    }
+  });
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

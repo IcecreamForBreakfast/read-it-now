@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article-card";
 import { SaveInstructionsModal } from "@/components/save-instructions-modal";
+import { TokenManager } from "@/components/token-manager";
 import { useToast } from "@/hooks/use-toast";
 import { Bookmark, Plus, LogOut, HelpCircle, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -156,6 +157,11 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Token Manager */}
+        <div className="mb-8">
+          <TokenManager />
+        </div>
+
         {/* Filters Section */}
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-3 mb-6">

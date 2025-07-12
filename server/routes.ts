@@ -24,26 +24,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     timestamp: new Date().toISOString()
   });
   
-  // Use PostgreSQL session store
-  const pgSession = connectPgSimple(session);
-  const sql = neon(process.env.DATABASE_URL!);
-  
+  // Use simple memory store for now - more reliable
   app.use(session({
-    store: new pgSession({
-      pool: sql as any,
-      tableName: 'session',
-      createTableIfMissing: true,
-    }),
     secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
-    resave: false, // Don't save session if unmodified
-    saveUninitialized: false, // Don't create session until something stored
-    name: 'sessionId',
+    resave: false,
+    saveUninitialized: false,
+    name: 'connect.sid', // Use default session name for better compatibility
     cookie: {
-      secure: false, // Keep false for both dev and prod
+      secure: false,
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      sameSite: "lax", // Use lax for better compatibility
-      domain: undefined, // Let browser set domain automatically
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: "lax",
     },
     rolling: true,
   }));
@@ -55,12 +46,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sessionId: req.sessionID,
       userId: req.session?.userId,
       hasSession: !!req.session,
-      hasAuth: !!req.headers.authorization,
+      cookies: req.headers.cookie,
+      userAgent: req.headers['user-agent']?.substring(0, 50),
       env: process.env.NODE_ENV || 'development'
     });
     
     // Check session auth first
     if (req.session?.userId) {
+      console.log('Session auth successful for user:', req.session.userId);
       return next();
     }
     
@@ -71,6 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUserByApiKey(apiKey);
         if (user) {
           req.userId = user.id;
+          console.log('API key auth successful for user:', user.id);
           return next();
         }
       } catch (error) {
@@ -78,6 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
     
+    console.log('Authentication failed - no valid session or API key');
     return res.status(401).json({ message: "Authentication required" });
   };
 
@@ -150,21 +145,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         env: process.env.NODE_ENV || 'development'
       });
       
-      // Force session to be saved by setting a property
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-        
-        console.log('Session saved successfully:', {
-          sessionId: req.sessionID,
-          userId: req.session.userId,
-          sessionData: req.session
-        });
-        
-        res.json({ user: { id: user.id, email: user.email } });
+      // Set session data and save
+      req.session.userId = user.id;
+      
+      console.log('Session created:', {
+        sessionId: req.sessionID,
+        userId: req.session.userId,
+        env: process.env.NODE_ENV || 'development'
       });
+      
+      res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
       console.error('Login error:', error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Login failed" });

@@ -87,12 +87,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
       
-      // Set HTTP-only cookie
+      // Set HTTP-only cookie with proper domain configuration
+      const isProduction = req.headers.host?.includes('replit.app');
+      console.log('Setting registration cookie for host:', req.headers.host, 'isProduction:', isProduction);
+      
       res.cookie('auth_token', token, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        domain: isProduction ? undefined : undefined, // Let browser handle domain
       });
       
       res.json({ user: { id: user.id, email: user.email } });
@@ -107,7 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: req.body?.email,
         userAgent: req.headers['user-agent']?.substring(0, 100),
         origin: req.headers.origin,
-        referer: req.headers.referer
+        referer: req.headers.referer,
+        host: req.headers.host
       });
       
       const { email, password } = loginSchema.parse(req.body);
@@ -125,12 +130,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
       
-      // Set HTTP-only cookie
+      // Set HTTP-only cookie with proper domain configuration
+      const isProduction = req.headers.host?.includes('replit.app');
+      console.log('Setting cookie for host:', req.headers.host, 'isProduction:', isProduction);
+      
       res.cookie('auth_token', token, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        domain: isProduction ? undefined : undefined, // Let browser handle domain
       });
       
       console.log('Login successful, cookie set for:', user.email);

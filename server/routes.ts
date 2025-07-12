@@ -40,21 +40,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { token } = req.params;
       
       // Debug: Log what we're receiving
-      console.log('Token save request body:', req.body);
-      console.log('Token save request URL:', req.body.url);
+      console.log('Token save request body:', JSON.stringify(req.body, null, 2));
+      console.log('Token save request headers:', req.headers);
       
-      const { url } = saveArticleSchema.parse(req.body);
+      // Handle different possible data formats from iOS shortcut
+      let url = req.body.url || req.body.URLs || req.body;
+      
+      // If it's an array (from iOS shortcuts), take the first URL
+      if (Array.isArray(url)) {
+        url = url[0];
+      }
+      
+      // If it's still an object, try to extract URL from it
+      if (typeof url === 'object' && url !== null) {
+        url = url.url || url.URLs || url.href || Object.values(url)[0];
+      }
+      
+      console.log('Extracted URL:', url);
+      
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ message: "No valid URL found in request" });
+      }
+      
+      // Normalize URL - add https:// if missing
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        normalizedUrl = `https://${normalizedUrl}`;
+      }
+      
+      // Basic URL validation
+      try {
+        new URL(normalizedUrl);
+      } catch {
+        return res.status(400).json({ message: "Invalid URL format" });
+      }
       
       // Find user by token
       const user = await storage.getUserByToken(token);
       if (!user) {
         return res.status(401).json({ message: "Invalid token" });
-      }
-      
-      // Normalize URL - add https:// if missing
-      let normalizedUrl = url;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        normalizedUrl = `https://${url}`;
       }
       
       // Extract article content

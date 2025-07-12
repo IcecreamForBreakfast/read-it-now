@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
-import MemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { neon } from "@neondatabase/serverless";
 import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 
@@ -14,8 +15,9 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration with proper store
-  const sessionStore = MemoryStore(session);
+  // Session configuration with database store for production persistence
+  const PgStore = connectPgSimple(session);
+  const sql = neon(process.env.DATABASE_URL!);
   
   // Debug production environment
   console.log('Environment check:', {
@@ -25,13 +27,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     timestamp: new Date().toISOString()
   });
   
+  // Create sessions table if it doesn't exist
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL
+      )
+      WITH (OIDS=FALSE);
+    `;
+    await sql`
+      CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+    `;
+    console.log('Session table created/verified');
+  } catch (error) {
+    console.log('Session table setup:', error);
+  }
+  
   app.use(session({
     secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
     resave: false,
     saveUninitialized: false,
-    name: 'sessionId', // Use different name to avoid conflicts
-    store: new sessionStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    name: 'sessionId',
+    store: new PgStore({
+      conString: process.env.DATABASE_URL,
+      tableName: 'session',
+      createTableIfMissing: true
     }),
     cookie: {
       secure: false, // Keep false for both dev and prod

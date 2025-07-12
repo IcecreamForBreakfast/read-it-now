@@ -2,78 +2,62 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import { neon } from "@neondatabase/serverless";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 
-declare module "express-session" {
-  interface SessionData {
-    userId: string;
-  }
-}
+const JWT_SECRET = process.env.JWT_SECRET || "your-jwt-secret-key-change-in-production";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration - use simple memory store for now to avoid connection issues
-  // Debug production environment
   console.log('Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     hasDB: !!process.env.DATABASE_URL,
-    hasSecret: !!process.env.SESSION_SECRET,
+    hasJWT: !!process.env.JWT_SECRET,
     timestamp: new Date().toISOString()
   });
   
-  // Use simple memory store for now - more reliable
-  app.use(session({
-    secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
-    resave: false,
-    saveUninitialized: false,
-    name: 'connect.sid', // Use default session name for better compatibility
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: "lax",
-    },
-    rolling: true,
-  }));
+  // Add cookie parser middleware
+  app.use(cookieParser());
 
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
-    // Debug auth check
-    console.log('Auth check:', {
-      sessionId: req.sessionID,
-      userId: req.session?.userId,
-      hasSession: !!req.session,
-      cookies: req.headers.cookie,
-      userAgent: req.headers['user-agent']?.substring(0, 50),
-      env: process.env.NODE_ENV || 'development'
-    });
-    
-    // Check session auth first
-    if (req.session?.userId) {
-      console.log('Session auth successful for user:', req.session.userId);
-      return next();
-    }
-    
-    // Check API key auth
-    const apiKey = req.headers.authorization?.replace('Bearer ', '');
-    if (apiKey) {
-      try {
-        const user = await storage.getUserByApiKey(apiKey);
-        if (user) {
-          req.userId = user.id;
-          console.log('API key auth successful for user:', user.id);
+    try {
+      // Check for JWT token in cookies first
+      const token = req.cookies?.auth_token;
+      
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          req.userId = decoded.userId;
+          console.log('JWT auth successful for user:', decoded.userId);
           return next();
+        } catch (jwtError) {
+          console.log('JWT verification failed:', jwtError);
         }
-      } catch (error) {
-        console.error('API key authentication error:', error);
       }
+      
+      // Check API key auth as fallback
+      const apiKey = req.headers.authorization?.replace('Bearer ', '');
+      if (apiKey) {
+        try {
+          const user = await storage.getUserByApiKey(apiKey);
+          if (user) {
+            req.userId = user.id;
+            console.log('API key auth successful for user:', user.id);
+            return next();
+          }
+        } catch (error) {
+          console.error('API key authentication error:', error);
+        }
+      }
+      
+      console.log('Authentication failed - no valid token or API key');
+      return res.status(401).json({ message: "Authentication required" });
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      return res.status(500).json({ message: "Authentication error" });
     }
-    
-    console.log('Authentication failed - no valid session or API key');
-    return res.status(401).json({ message: "Authentication required" });
   };
 
   // Auth routes
@@ -95,14 +79,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
       });
 
-      req.session.userId = user.id;
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-        res.json({ user: { id: user.id, email: user.email } });
+      // Generate JWT token
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+      
+      // Set HTTP-only cookie
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
+      
+      res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
       res.status(400).json({ message: error instanceof Error ? error.message : "Registration failed" });
     }
@@ -145,14 +133,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         env: process.env.NODE_ENV || 'development'
       });
       
-      // Set session data and save
-      req.session.userId = user.id;
+      // Generate JWT token
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
       
-      console.log('Session created:', {
-        sessionId: req.sessionID,
-        userId: req.session.userId,
-        env: process.env.NODE_ENV || 'development'
+      // Set HTTP-only cookie
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
+      
+      console.log('JWT token created for user:', user.id);
       
       res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
@@ -174,17 +166,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Logout failed" });
-      }
-      res.json({ message: "Logged out successfully" });
-    });
+    // Clear the auth token cookie
+    res.clearCookie('auth_token');
+    res.json({ message: "Logged out successfully" });
   });
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const user = await storage.getUserById(userId!);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
@@ -198,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API key generation endpoint
   app.post("/api/auth/generate-key", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const apiKey = await storage.generateApiKey(userId!);
       res.json({ apiKey });
     } catch (error) {
@@ -209,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Article routes
   app.get("/api/articles", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const tag = req.query.tag as string;
       const articles = await storage.getArticlesByUserId(userId!, tag);
       res.json(articles);
@@ -220,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/articles/:id", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const article = await storage.getArticleById(req.params.id);
       if (!article || article.userId !== userId!) {
         return res.status(404).json({ message: "Article not found" });
@@ -234,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/articles", requireAuth, async (req, res) => {
     try {
       const { url } = saveArticleSchema.parse(req.body);
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       
       // Extract article content and metadata
       const { title, content } = await extractArticleContent(url);
@@ -257,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/articles/:id", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const success = await storage.deleteArticle(req.params.id, userId!);
       if (!success) {
         return res.status(404).json({ message: "Article not found" });
@@ -270,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const { tag } = req.body;
       const article = await storage.updateArticleTag(req.params.id, userId!, tag);
       if (!article) {
@@ -284,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       const tags = await storage.getTagsByUserId(userId!);
       res.json(tags);
     } catch (error) {
@@ -296,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/save", requireAuth, async (req, res) => {
     try {
       const { url } = saveArticleSchema.parse(req.body);
-      const userId = req.session?.userId || req.userId;
+      const userId = req.userId;
       
       // Extract article content and metadata
       const { title, content } = await extractArticleContent(url);

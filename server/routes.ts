@@ -106,18 +106,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log('Login request received:', {
+        body: req.body,
+        contentType: req.headers['content-type'],
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+      });
+      
       const { email, password } = loginSchema.parse(req.body);
+      
+      console.log('Parsed login data:', { email, passwordLength: password?.length });
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log('User not found for email:', email);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      console.log('User found, checking password...', { userEmail: user.email });
+      
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
+        console.log('Password validation failed for:', email);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      console.log('Password valid, creating session...');
       req.session.userId = user.id;
       
       // Debug production session
@@ -142,6 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ user: { id: user.id, email: user.email } });
       });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Login failed" });
     }
   });

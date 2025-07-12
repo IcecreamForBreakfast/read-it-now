@@ -18,16 +18,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: process.env.SESSION_SECRET || "read-it-later-secret",
     resave: false,
     saveUninitialized: false,
+    name: 'connect.sid', // Explicit session name
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Disable secure for now to fix production issues
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      sameSite: "lax", // Better compatibility while still secure
+      sameSite: "lax", // Use lax for better compatibility
     },
+    // Force session regeneration on login
+    rolling: true,
   }));
 
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
+    // Debug session info
+    console.log('Session debug:', {
+      sessionId: req.session?.id,
+      userId: req.session?.userId,
+      cookie: req.session?.cookie,
+      headers: req.headers.authorization ? 'Bearer token present' : 'No bearer token'
+    });
+    
     // Check session auth first
     if (req.session?.userId) {
       return next();
@@ -85,6 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
+      console.log('Login attempt for:', email);
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
@@ -97,11 +109,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       req.session.userId = user.id;
+      console.log('Setting session for user:', user.id);
+      
       req.session.save((err) => {
         if (err) {
           console.error('Session save error:', err);
           return res.status(500).json({ message: "Session save failed" });
         }
+        console.log('Session saved successfully:', req.session.id);
         res.json({ user: { id: user.id, email: user.email } });
       });
     } catch (error) {

@@ -53,6 +53,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
 
+      console.log('Authentication failed - no valid token or API key, headers:', {
+        cookies: req.headers.cookie,
+        authorization: req.headers.authorization,
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+      });
       return res.status(401).json({ message: "Authentication required" });
     } catch (error) {
       console.error('Auth middleware error:', error);
@@ -98,6 +103,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log('Login attempt:', {
+        email: req.body?.email,
+        userAgent: req.headers['user-agent']?.substring(0, 100),
+        origin: req.headers.origin,
+        referer: req.headers.referer
+      });
+      
       const { email, password } = loginSchema.parse(req.body);
       
       const user = await storage.getUserByEmail(email);
@@ -121,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
       
-
+      console.log('Login successful, cookie set for:', user.email);
       
       res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {

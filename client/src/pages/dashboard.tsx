@@ -48,7 +48,19 @@ export default function Dashboard() {
   } = useQuery({
     queryKey: ["/api/articles"],
     enabled: !!user,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Dashboard state:', {
+      user,
+      articlesLoading,
+      articlesError,
+      articlesCount: articles.length
+    });
+  }, [user, articlesLoading, articlesError, articles]);
 
   const { data: tags = [] } = useQuery({
     queryKey: ["/api/tags"],

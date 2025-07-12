@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
+import MemoryStore from "memorystore";
 import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 
@@ -13,24 +14,38 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration
+  // Session configuration with proper store
+  const sessionStore = MemoryStore(session);
+  
   app.use(session({
     secret: process.env.SESSION_SECRET || "read-it-later-secret",
     resave: false,
     saveUninitialized: false,
-    name: 'connect.sid', // Explicit session name
+    name: 'sessionId', // Use different name to avoid conflicts
+    store: new sessionStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     cookie: {
-      secure: false, // Disable secure for now to fix production issues
+      secure: false, // Keep false for both dev and prod
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: "lax", // Use lax for better compatibility
+      domain: undefined, // Let browser set domain automatically
     },
-    // Force session regeneration on login
     rolling: true,
   }));
 
   // Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
+    // Debug auth check
+    console.log('Auth check:', {
+      sessionId: req.sessionID,
+      userId: req.session?.userId,
+      hasSession: !!req.session,
+      hasAuth: !!req.headers.authorization,
+      env: process.env.NODE_ENV || 'development'
+    });
+    
     // Check session auth first
     if (req.session?.userId) {
       return next();
@@ -100,11 +115,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       req.session.userId = user.id;
+      
+      // Debug production session
+      console.log('Production login debug:', {
+        userId: user.id,
+        sessionId: req.sessionID,
+        beforeSave: req.session.userId,
+        env: process.env.NODE_ENV || 'development'
+      });
+      
       req.session.save((err) => {
         if (err) {
           console.error('Session save error:', err);
           return res.status(500).json({ message: "Session save failed" });
         }
+        
+        console.log('Session saved successfully:', {
+          sessionId: req.sessionID,
+          userId: req.session.userId
+        });
+        
         res.json({ user: { id: user.id, email: user.email } });
       });
     } catch (error) {

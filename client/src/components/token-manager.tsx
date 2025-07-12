@@ -18,8 +18,7 @@ export function TokenManager() {
     queryKey: ["/api/auth/me"],
   });
 
-  // Debug: Log user data to see what's being returned
-  console.log("TokenManager - User data:", user);
+
 
   const generateTokenMutation = useMutation({
     mutationFn: async () => {

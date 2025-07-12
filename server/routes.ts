@@ -15,10 +15,7 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration with database store for production persistence
-  const PgStore = connectPgSimple(session);
-  const sql = neon(process.env.DATABASE_URL!);
-  
+  // Session configuration - use simple memory store for now to avoid connection issues
   // Debug production environment
   console.log('Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
@@ -27,34 +24,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     timestamp: new Date().toISOString()
   });
   
-  // Create sessions table if it doesn't exist
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS "session" (
-        "sid" varchar NOT NULL COLLATE "default",
-        "sess" json NOT NULL,
-        "expire" timestamp(6) NOT NULL
-      )
-      WITH (OIDS=FALSE);
-    `;
-    await sql`
-      CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
-    `;
-    console.log('Session table created/verified');
-  } catch (error) {
-    console.log('Session table setup:', error);
-  }
-  
   app.use(session({
     secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
     resave: false,
     saveUninitialized: false,
     name: 'sessionId',
-    store: new PgStore({
-      conString: process.env.DATABASE_URL,
-      tableName: 'session',
-      createTableIfMissing: true
-    }),
     cookie: {
       secure: false, // Keep false for both dev and prod
       httpOnly: true,

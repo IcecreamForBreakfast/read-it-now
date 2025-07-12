@@ -38,6 +38,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/save/:token", async (req, res) => {
     try {
       const { token } = req.params;
+      
+      // Debug: Log what we're receiving
+      console.log('Token save request body:', req.body);
+      console.log('Token save request URL:', req.body.url);
+      
       const { url } = saveArticleSchema.parse(req.body);
       
       // Find user by token
@@ -46,14 +51,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid token" });
       }
       
+      // Normalize URL - add https:// if missing
+      let normalizedUrl = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        normalizedUrl = `https://${url}`;
+      }
+      
       // Extract article content
-      const domain = extractDomain(url);
-      const articleContent = await extractArticleContent(url);
+      const domain = extractDomain(normalizedUrl);
+      const articleContent = await extractArticleContent(normalizedUrl);
       
       // Save article
       const article = await storage.createArticle({
         userId: user.id,
-        url,
+        url: normalizedUrl,
         title: articleContent.title,
         domain,
         content: articleContent.content,

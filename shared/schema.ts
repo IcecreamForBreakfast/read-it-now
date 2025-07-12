@@ -44,7 +44,20 @@ export const magicLinkSchema = z.object({
 });
 
 export const saveArticleSchema = z.object({
-  url: z.string().url(),
+  url: z.string().min(1).refine((val) => {
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      // If it doesn't have a protocol, try adding https://
+      try {
+        new URL(`https://${val}`);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }, { message: "Invalid URL format" }),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

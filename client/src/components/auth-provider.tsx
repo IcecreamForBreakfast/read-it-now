@@ -24,15 +24,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: authData, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
-    enabled: !user,
   });
 
   useEffect(() => {
     if (authData?.user) {
       setUser(authData.user);
-      setLocation("/dashboard");
     }
-  }, [authData, setLocation]);
+  }, [authData]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch("/api/auth/login", {

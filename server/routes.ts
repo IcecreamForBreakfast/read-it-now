@@ -30,10 +30,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const decoded = jwt.verify(token, JWT_SECRET) as any;
           req.userId = decoded.userId;
-          console.log('JWT auth successful for user:', decoded.userId);
+
           return next();
         } catch (jwtError) {
-          console.log('JWT verification failed:', jwtError);
+          // JWT verification failed, continue to API key check
         }
       }
       
@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUserByApiKey(apiKey);
           if (user) {
             req.userId = user.id;
-            console.log('API key auth successful for user:', user.id);
+
             return next();
           }
         } catch (error) {
@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log('Authentication failed - no valid token or API key');
+
       return res.status(401).json({ message: "Authentication required" });
     } catch (error) {
       console.error('Auth middleware error:', error);
@@ -98,40 +98,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      console.log('Login request received:', {
-        body: req.body,
-        contentType: req.headers['content-type'],
-        userAgent: req.headers['user-agent']?.substring(0, 50)
-      });
-      
       const { email, password } = loginSchema.parse(req.body);
-      
-      console.log('Parsed login data:', { email, passwordLength: password?.length });
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
-        console.log('User not found for email:', email);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      console.log('User found, checking password...', { userEmail: user.email });
-      
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        console.log('Password validation failed for:', email);
         return res.status(401).json({ message: "Invalid credentials" });
       }
-
-      console.log('Password valid, creating session...');
-      req.session.userId = user.id;
-      
-      // Debug production session
-      console.log('Production login debug:', {
-        userId: user.id,
-        sessionId: req.sessionID,
-        beforeSave: req.session.userId,
-        env: process.env.NODE_ENV || 'development'
-      });
       
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -144,11 +121,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
       
-      console.log('JWT token created for user:', user.id);
+
       
       res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
-      console.error('Login error:', error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Login failed" });
     }
   });

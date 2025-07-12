@@ -18,6 +18,9 @@ export function TokenManager() {
     queryKey: ["/api/auth/me"],
   });
 
+  // Debug: Log user data to see what's being returned
+  console.log("TokenManager - User data:", user);
+
   const generateTokenMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/generate-token");
@@ -57,7 +60,7 @@ export function TokenManager() {
 
   const copyShortcutUrl = async () => {
     const baseUrl = window.location.origin;
-    const token = user?.personalToken;
+    const token = user?.user?.personalToken;
     if (!token) return;
 
     const shortcutUrl = `${baseUrl}/api/save/${token}`;
@@ -88,21 +91,21 @@ export function TokenManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {user?.personalToken ? (
+        {user?.user?.personalToken ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="token">Personal Token</Label>
               <div className="flex gap-2">
                 <Input
                   id="token"
-                  value={user.personalToken}
+                  value={user.user.personalToken}
                   readOnly
                   className="font-mono text-sm"
                 />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => copyToken(user.personalToken!)}
+                  onClick={() => copyToken(user.user.personalToken!)}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -114,7 +117,7 @@ export function TokenManager() {
               <div className="flex gap-2">
                 <Input
                   id="shortcut-url"
-                  value={`${window.location.origin}/api/save/${user.personalToken}`}
+                  value={`${window.location.origin}/api/save/${user.user.personalToken}`}
                   readOnly
                   className="font-mono text-sm"
                 />

@@ -17,8 +17,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session configuration with proper store
   const sessionStore = MemoryStore(session);
   
+  // Debug production environment
+  console.log('Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    hasDB: !!process.env.DATABASE_URL,
+    hasSecret: !!process.env.SESSION_SECRET,
+    timestamp: new Date().toISOString()
+  });
+  
   app.use(session({
-    secret: process.env.SESSION_SECRET || "read-it-later-secret",
+    secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
     resave: false,
     saveUninitialized: false,
     name: 'sessionId', // Use different name to avoid conflicts

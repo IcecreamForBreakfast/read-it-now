@@ -26,8 +26,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use(session({
     secret: process.env.SESSION_SECRET || "read-it-later-secret-fallback",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Force session to be saved
+    saveUninitialized: true, // Allow uninitialized sessions
     name: 'sessionId',
     cookie: {
       secure: false, // Keep false for both dev and prod
@@ -141,6 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         env: process.env.NODE_ENV || 'development'
       });
       
+      // Force session to be saved by setting a property
       req.session.save((err) => {
         if (err) {
           console.error('Session save error:', err);
@@ -149,7 +150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('Session saved successfully:', {
           sessionId: req.sessionID,
-          userId: req.session.userId
+          userId: req.session.userId,
+          sessionData: req.session
         });
         
         res.json({ user: { id: user.id, email: user.email } });

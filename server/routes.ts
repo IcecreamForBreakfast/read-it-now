@@ -39,10 +39,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { token } = req.params;
       
-      // Debug: Log what we're receiving
-      console.log('Token save request body:', JSON.stringify(req.body, null, 2));
-      console.log('Token save request headers:', req.headers);
-      
       // Handle different possible data formats from iOS shortcut
       let url = req.body.url || req.body.URLs || req.body;
       
@@ -55,8 +51,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (typeof url === 'object' && url !== null) {
         url = url.url || url.URLs || url.href || Object.values(url)[0];
       }
-      
-      console.log('Extracted URL:', url);
       
       if (!url || typeof url !== 'string') {
         return res.status(400).json({ message: "No valid URL found in request" });

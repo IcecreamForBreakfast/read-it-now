@@ -12,6 +12,10 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ Enhanced error handling for blocked websites with user-friendly messages
 - ✅ Reader view now displays articles with proper line breaks and typography
 - ✅ All core functionality working: user registration, login, article saving, and reading
+- ✅ **iOS Sharing Integration Complete**: Personal token system for seamless article saving
+- ✅ **Token Management UI**: Dashboard component with copy buttons for easy setup
+- ✅ **Flexible URL Validation**: Handles various URL formats from iOS shortcuts
+- ✅ **Production Ready**: iOS shortcut successfully tested and saving articles
 
 ## User Preferences
 

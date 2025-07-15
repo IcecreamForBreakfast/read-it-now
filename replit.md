@@ -17,6 +17,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Flexible URL Validation**: Handles various URL formats from iOS shortcuts
 - ✅ **Production Ready**: iOS shortcut successfully tested and saving articles
 - ✅ **Uptime Monitoring**: UptimeRobot configured to keep app awake for reliable iOS shortcut performance
+- ✅ **Optimistic Delete Operations**: Fixed delete functionality with instant UI updates and graceful 404 handling
+- ✅ **Professional UX**: Smooth article management with proper error handling and success feedback
 
 ## User Preferences
 

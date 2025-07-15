@@ -94,15 +94,28 @@ export default function Dashboard() {
       });
     },
     onError: (error, id, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousArticles) {
-        queryClient.setQueryData(["/api/articles"], context.previousArticles);
+      // Check if it's a 404 error (article already deleted)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      const is404 = errorMessage.includes("404") || errorMessage.includes("not found");
+      
+      if (is404) {
+        // Article was already deleted, just show success message
+        toast({
+          title: "Article deleted",
+          description: "Article has been removed from your collection",
+        });
+        // Don't roll back the optimistic update since the article is actually gone
+      } else {
+        // If the mutation fails for other reasons, use the context to roll back
+        if (context?.previousArticles) {
+          queryClient.setQueryData(["/api/articles"], context.previousArticles);
+        }
+        toast({
+          title: "Failed to delete article",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
-      toast({
-        title: "Failed to delete article",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
     },
     onSettled: () => {
       // Always refetch after error or success

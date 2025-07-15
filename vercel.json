@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "read-it-now",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/client",
+  "functions": {
+    "server/index.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/index.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/client/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

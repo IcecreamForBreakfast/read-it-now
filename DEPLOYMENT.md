@@ -1,0 +1,49 @@
+# Vercel Deployment Guide
+
+## Prerequisites
+- GitHub repository: `https://github.com/IcecreamForBreakfast/read-it-now.git`
+- Supabase database configured
+- Environment variables ready
+
+## Deployment Steps
+
+### 1. Sign up for Vercel
+- Go to https://vercel.com
+- Sign up with GitHub account
+- Connect your GitHub account
+
+### 2. Create New Project
+- Click "New Project"
+- Select `IcecreamForBreakfast/read-it-now` repository
+- Click "Import"
+
+### 3. Configure Environment Variables
+Add these in Vercel dashboard:
+```
+DATABASE_URL=your_supabase_connection_string
+SESSION_SECRET=your_session_secret_key
+NODE_ENV=production
+```
+
+### 4. Deploy
+- Click "Deploy"
+- Wait for build to complete
+- Your app will be available at `https://read-it-now.vercel.app`
+
+### 5. Update iOS Shortcut
+- Replace the URL in your iOS shortcut from Replit to the new Vercel URL
+- Test article saving functionality
+
+### 6. Update UptimeRobot (Optional)
+- Update monitoring URL to the new Vercel domain
+- Vercel has better uptime than Replit by default
+
+## Post-Deployment
+- Test all functionality: login, article saving, reading, deletion
+- Verify iOS shortcut works with new URL
+- Check database connections are working
+
+## Troubleshooting
+- If build fails: Check build logs in Vercel dashboard
+- If database connection fails: Verify DATABASE_URL environment variable
+- If sessions don't work: Check SESSION_SECRET is set correctly

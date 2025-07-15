@@ -93,8 +93,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteArticle(id: string, userId: string): Promise<boolean> {
-    const result = await db.delete(articles).where(and(eq(articles.id, id), eq(articles.userId, userId)));
-    return result.length > 0;
+    // First check if the article exists and belongs to the user
+    const existingArticle = await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), eq(articles.userId, userId)))
+      .limit(1);
+    
+    if (existingArticle.length === 0) {
+      return false; // Article doesn't exist or doesn't belong to user
+    }
+    
+    // Delete the article
+    await db.delete(articles).where(and(eq(articles.id, id), eq(articles.userId, userId)));
+    return true;
   }
 
   async updateArticleTag(id: string, userId: string, tag: string): Promise<Article | undefined> {

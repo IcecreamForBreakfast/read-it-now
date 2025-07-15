@@ -70,6 +70,21 @@ export default function Dashboard() {
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/articles/${id}`);
     },
+    onMutate: async (id: string) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/articles"] });
+      
+      // Snapshot the previous value
+      const previousArticles = queryClient.getQueryData(["/api/articles"]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/articles"], (old: any) => {
+        return old?.filter((article: any) => article.id !== id) || [];
+      });
+      
+      // Return a context object with the snapshotted value
+      return { previousArticles };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
@@ -78,12 +93,20 @@ export default function Dashboard() {
         description: "Article has been removed from your collection",
       });
     },
-    onError: (error) => {
+    onError: (error, id, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousArticles) {
+        queryClient.setQueryData(["/api/articles"], context.previousArticles);
+      }
       toast({
         title: "Failed to delete article",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
     },
   });
 

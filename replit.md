@@ -16,6 +16,7 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Token Management UI**: Dashboard component with copy buttons for easy setup
 - ✅ **Flexible URL Validation**: Handles various URL formats from iOS shortcuts
 - ✅ **Production Ready**: iOS shortcut successfully tested and saving articles
+- ✅ **Uptime Monitoring**: UptimeRobot configured to keep app awake for reliable iOS shortcut performance
 
 ## User Preferences
 

@@ -36,26 +36,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   }));
 
-  // Middleware to update session with user_id for better tracking
-  app.use((req, res, next) => {
-    if (req.session && req.session.userId) {
-      // Update the session record with user_id for better visibility in Supabase
-      req.session.save((err) => {
-        if (!err && req.session.store) {
-          // Update the user_id column in the session table
-          const sessionStore = req.session.store as any;
-          if (sessionStore.query) {
-            sessionStore.query(
-              'UPDATE session SET user_id = $1 WHERE sid = $2',
-              [req.session.userId, req.sessionID],
-              () => {} // Silent update
-            );
-          }
-        }
-      });
-    }
-    next();
-  });
+  // Simple middleware - no session tracking needed for now
+  // The user_id column is available for manual inspection in Supabase
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
@@ -163,17 +145,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Session save error:', err);
           return res.status(500).json({ message: "Session save failed" });
         }
-        
-        // Update the user_id column in the session table
-        const sessionStore = req.session.store as any;
-        if (sessionStore.query) {
-          sessionStore.query(
-            'UPDATE session SET user_id = $1 WHERE sid = $2',
-            [user.id, req.sessionID],
-            () => {} // Silent update
-          );
-        }
-        
         res.json({ user: { id: user.id, email: user.email } });
       });
     } catch (error) {
@@ -201,17 +172,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Session save error:', err);
           return res.status(500).json({ message: "Session save failed" });
         }
-        
-        // Update the user_id column in the session table
-        const sessionStore = req.session.store as any;
-        if (sessionStore.query) {
-          sessionStore.query(
-            'UPDATE session SET user_id = $1 WHERE sid = $2',
-            [user.id, req.sessionID],
-            () => {} // Silent update
-          );
-        }
-        
         res.json({ user: { id: user.id, email: user.email } });
       });
     } catch (error) {

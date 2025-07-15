@@ -24,6 +24,10 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 
 Preferred communication style: Simple, everyday language.
 
+## Next Session Reminders
+- Update Git repository with current code
+- Discuss production hosting plans and deployment options
+
 ## System Architecture
 
 ### Frontend Architecture

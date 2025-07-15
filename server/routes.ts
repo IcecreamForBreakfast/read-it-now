@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
+// @ts-ignore
+import ConnectPgSimple from "connect-pg-simple";
 import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 
@@ -13,8 +15,16 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session configuration
+  // PostgreSQL session store configuration
+  const PgSession = ConnectPgSimple(session);
+  
+  // Session configuration with PostgreSQL store
   app.use(session({
+    store: new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: "session", // Use the existing table name
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || "read-it-later-secret",
     resave: false,
     saveUninitialized: false,

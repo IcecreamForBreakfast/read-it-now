@@ -28,6 +28,11 @@ Preferred communication style: Simple, everyday language.
 - Update Git repository with current code
 - Discuss production hosting plans and deployment options
 
+## Future Features Todo List
+- AI-generated short descriptions for each article
+- Extract and display original article publication date when available
+- **Big Idea**: Consider merging with Evernote clone - after archiving articles, option to save for future reference in note-taking system
+
 ## System Architecture
 
 ### Frontend Architecture

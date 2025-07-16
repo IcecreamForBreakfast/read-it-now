@@ -16,6 +16,7 @@
 - Click "New Project"
 - Select `IcecreamForBreakfast/read-it-now` repository
 - Click "Import"
+- **Let Vercel auto-detect project settings** (no custom configuration needed)
 
 ### 3. Configure Environment Variables
 Add these in Vercel dashboard:

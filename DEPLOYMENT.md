@@ -50,5 +50,13 @@ NODE_ENV=production
 - If you see code instead of the website: The vercel.json has been fixed to serve the frontend properly
 
 ## Common Issues Fixed
-- **Frontend not loading**: Updated vercel.json to serve from correct dist/public directory
+- **Frontend not loading**: Updated vercel.json to serve from correct dist/public directory  
 - **Build configuration**: Configured proper build command and output directory for Vercel
+- **Build timeouts**: Simplified build process to use `vite build` instead of full npm build
+- **Large icon bundles**: Optimized for faster Vercel builds by using only frontend build
+
+## Build Process
+- Vercel runs `vite build` to create the frontend
+- Frontend assets are served from `dist/public`
+- Backend API runs as serverless functions from `server/index.ts`
+- Environment variables are configured in Vercel dashboard

@@ -1,8 +1,9 @@
 {
   "version": 2,
   "name": "read-it-now",
-  "buildCommand": "npm run build && cp -r dist/public/* dist/",
-  "outputDirectory": "dist",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist/public",
+  "installCommand": "npm install",
   "functions": {
     "server/index.ts": {
       "runtime": "@vercel/node"
@@ -15,7 +16,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/dist/public/$1"
     }
   ],
   "env": {

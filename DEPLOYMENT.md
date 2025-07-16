@@ -47,3 +47,8 @@ NODE_ENV=production
 - If build fails: Check build logs in Vercel dashboard
 - If database connection fails: Verify DATABASE_URL environment variable
 - If sessions don't work: Check SESSION_SECRET is set correctly
+- If you see code instead of the website: The vercel.json has been fixed to serve the frontend properly
+
+## Common Issues Fixed
+- **Frontend not loading**: Updated vercel.json to serve from correct dist/public directory
+- **Build configuration**: Configured proper build command and output directory for Vercel

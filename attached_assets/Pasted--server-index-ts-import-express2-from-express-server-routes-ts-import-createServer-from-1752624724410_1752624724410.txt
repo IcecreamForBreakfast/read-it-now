@@ -1,0 +1,107 @@
+// server/index.ts
+import express2 from "express";
+
+// server/routes.ts
+import { createServer } from "http";
+
+// server/storage.ts
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+// shared/schema.ts
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+var users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  personalToken: text("personal_token").unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+var articles = pgTable("articles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  title: text("title").notNull(),
+  domain: text("domain").notNull(),
+  content: text("content"),
+  tag: text("tag").notNull().default("untagged"),
+  savedAt: timestamp("saved_at").defaultNow().notNull()
+});
+var insertUserSchema = createInsertSchema(users).pick({
+  email: true,
+  password: true
+});
+var insertArticleSchema = createInsertSchema(articles).pick({
+  url: true,
+  title: true,
+  domain: true,
+  content: true,
+  tag: true
+});
+var loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6)
+});
+var magicLinkSchema = z.object({
+  email: z.string().email()
+});
+var saveArticleSchema = z.object({
+  url: z.string().min(1).refine((val) => {
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      try {
+        new URL(`https://${val}`);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }, { message: "Invalid URL format" })
+});
+
+// server/storage.ts
+import { eq, desc, and } from "drizzle-orm";
+var connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
+var client = postgres(connectionString);
+var db = drizzle(client);
+var DatabaseStorage = class {
+  async getUserById(id) {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+  async getUserByEmail(email) {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+  async getUserByToken(token) {
+    const result = await db.select().from(users).where(eq(users.personalToken, token)).limit(1);
+    return result[0];
+  }
+  async createUser(user) {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+  async generatePersonalToken(userId) {
+    const token = Array.from(
+      crypto.getRandomValues(new Uint8Array(24)),
+      (byte) => byte.toString(16).padStart(2, "0")
+    ).join("");
+    await db.update(users).set({ personalToken: token }).where(eq(users.id, userId));
+    return token;
+  }
+  async getArticlesByUserId(userId, tag) {
+    if (tag && tag !== "all") {
+      const result = await db.select().from(articles).where(and(eq(articles.userId, userId), eq(articles.tag, tag))).orderBy(desc(articles.savedAt));
+      return result;
+    } else {
+      const result = await db.select().from(articles).where(eq(articles.userId, userId)).orderBy(desc(articles.savedAt));
+      return result;
+    }
+  }

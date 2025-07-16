@@ -8,7 +8,7 @@
   "functions": {
     "server/index.ts": {
       "runtime": "@vercel/node",
-      "includeFiles": ["shared/**"]
+      "includeFiles": "shared/**"
     }
   },
   "routes": [

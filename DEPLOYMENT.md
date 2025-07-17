@@ -1,4 +1,8 @@
-# Vercel Deployment Guide
+# Deployment Guide
+
+**Note: This project now uses Render for deployment. For current deployment instructions, see `RENDER_DEPLOYMENT.md`**
+
+## Legacy Vercel Instructions (Deprecated)
 
 ## Prerequisites
 - GitHub repository: `https://github.com/IcecreamForBreakfast/read-it-now.git`

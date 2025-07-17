@@ -47,6 +47,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Health check endpoint for monitoring
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   // Token sharing endpoint
   app.post("/api/save/:token", async (req, res) => {
     try {

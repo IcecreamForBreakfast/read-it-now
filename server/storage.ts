@@ -18,6 +18,7 @@ export interface IStorage {
   getUserByToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   generatePersonalToken(userId: string): Promise<string>;
+  updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   
   // Article operations
   getArticlesByUserId(userId: string, tag?: string): Promise<Article[]>;
@@ -62,6 +63,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
     
     return token;
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
   }
 
   async getArticlesByUserId(userId: string, tag?: string): Promise<Article[]> {

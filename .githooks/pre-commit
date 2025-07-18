@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Pre-commit hook to run critical tests
+# This prevents committing code that breaks authentication
+
+echo "Running pre-commit tests..."
+
+# Run only the critical authentication tests (fast)
+NODE_ENV=test npx jest tests/auth-working.test.ts --no-coverage --silent
+
+# Check if tests passed
+if [ $? -ne 0 ]; then
+    echo "❌ Authentication tests failed! Commit blocked."
+    echo "Run 'npm test' to see detailed test results."
+    exit 1
+fi
+
+echo "✅ Critical tests passed. Proceeding with commit."
+exit 0

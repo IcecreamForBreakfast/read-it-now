@@ -28,6 +28,9 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Password Change Feature**: Secure password update with current password validation and 8+ character requirement
 - ✅ **iOS Token Management Reorganized**: Moved token display and regeneration to "How To Save" modal with safety warnings
 - ✅ **Cleaner Dashboard Interface**: Removed token management clutter, added collapsible password change at bottom
+- ✅ **Auto-Tagging System Implemented**: Rule-based intelligent tagging of articles as "work", "personal", or "uncertain"
+- ✅ **Analytics Dashboard**: Shows tag distribution, performance metrics, and smart rule suggestions
+- ✅ **Auto-Tagging Successfully Tested**: System correctly categorized articles with work/uncertain tags
 
 ## User Preferences
 

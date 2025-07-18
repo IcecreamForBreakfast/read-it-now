@@ -29,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Allow cookies over HTTP for now to fix session issues
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: "lax", // Better compatibility while still secure
@@ -41,6 +41,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('Session check:', {
+      sessionId: req.sessionID,
+      userId: req.session?.userId,
+      cookies: req.headers.cookie
+    });
     if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }

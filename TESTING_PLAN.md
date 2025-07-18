@@ -27,6 +27,17 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 #### Backend Unit Tests
 **Priority: High**
 
+**Authentication & Authorization (`server/routes.ts` auth middleware)**
+- Test password hashing and verification with bcrypt
+- Test session creation, validation, and expiration
+- Test requireAuth middleware with valid/invalid sessions
+- Test session cookie handling and security settings
+- Test token generation and lookup for iOS integration
+- Test user isolation (users can only access their own data)
+- Test concurrent session handling
+- Test session cleanup on logout
+- Test authentication edge cases (malformed tokens, expired sessions)
+
 **Auto-Tagging Engine (`server/lib/auto-tagger.ts`)**
 - Test rule matching for work/personal/uncertain classification
 - Test confidence scoring algorithms
@@ -45,12 +56,7 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - Test query filtering and sorting
 - Test transaction handling
 - Test error scenarios (duplicate entries, missing records)
-
-**Authentication Logic**
-- Test password hashing and verification
-- Test session creation and validation
-- Test token generation and lookup
-- Test security edge cases
+- Test user data isolation at database level
 
 #### Frontend Unit Tests
 **Priority: Medium**
@@ -83,12 +89,20 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - `GET /api/auth/me` - Session validation
 - `POST /api/auth/logout` - Session cleanup
 
+**Authorization Security Tests**
+- Test all protected endpoints reject unauthenticated requests
+- Test users cannot access other users' articles
+- Test session middleware catches expired/invalid sessions
+- Test CSRF protection on state-changing operations
+- Test rate limiting on authentication endpoints
+- Test session fixation and hijacking protection
+
 **Article Management Endpoints**
-- `GET /api/articles` - List articles with filtering
-- `POST /api/articles` - Create article with auto-tagging
-- `GET /api/articles/:id` - Individual article retrieval
-- `DELETE /api/articles/:id` - Article deletion
-- `PATCH /api/articles/:id/tag` - Manual tag updates
+- `GET /api/articles` - List articles with filtering (auth required)
+- `POST /api/articles` - Create article with auto-tagging (auth required)
+- `GET /api/articles/:id` - Individual article retrieval (auth + ownership)
+- `DELETE /api/articles/:id` - Article deletion (auth + ownership)
+- `PATCH /api/articles/:id/tag` - Manual tag updates (auth + ownership)
 
 **Auto-Tagging Endpoints**
 - `GET /api/auto-tag/analytics` - Analytics generation
@@ -167,7 +181,7 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 ## Test Implementation Plan
 
 ### Phase 1: Foundation (Week 1)
-**Goal: Establish testing infrastructure and cover critical paths**
+**Goal: Establish testing infrastructure and cover critical auth/security paths**
 
 1. **Setup Testing Framework**
    - Install Jest for backend unit tests
@@ -175,23 +189,36 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
    - Configure test database (separate from development)
    - Setup test scripts in package.json
 
-2. **Critical Unit Tests**
+2. **Critical Security & Auth Tests (TOP PRIORITY)**
+   - Session middleware authentication tests
+   - User data isolation tests
+   - Authorization boundary tests
+   - Token security tests
+   - Password hashing/verification tests
+
+3. **Core Functionality Tests**
    - Auto-tagging engine tests
-   - Authentication logic tests
    - Database operations tests
    - Article parsing tests
 
 ### Phase 2: API Coverage (Week 2)
-**Goal: Comprehensive API endpoint testing**
+**Goal: Comprehensive API endpoint and authorization testing**
 
-1. **API Integration Tests**
+1. **Authorization Integration Tests (CRITICAL)**
+   - Test every protected endpoint rejects unauthorized requests
+   - Test cross-user data access prevention
+   - Test session handling across different scenarios
+   - Test iOS token authentication flows
+   - Test concurrent user sessions
+
+2. **API Integration Tests**
    - All authentication endpoints
    - All article management endpoints
    - Auto-tagging endpoints
    - Error handling scenarios
 
-2. **Database Integration Tests**
-   - Session management
+3. **Database Integration Tests**
+   - Session management and cleanup
    - Article processing pipeline
    - Data integrity constraints
 
@@ -285,11 +312,12 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 ## Success Criteria
 
 ### Testing Implementation Success
-1. **Confidence**: Developers can refactor code safely
-2. **Reliability**: Failed tests accurately indicate real issues
-3. **Speed**: Test suite completes quickly enough for frequent runs
-4. **Coverage**: All critical functionality is tested
-5. **Maintainability**: Tests are easy to understand and update
+1. **Security**: Authorization bugs are caught before production
+2. **Confidence**: Developers can refactor code safely
+3. **Reliability**: Failed tests accurately indicate real issues
+4. **Speed**: Test suite completes quickly enough for frequent runs
+5. **Coverage**: All critical functionality is tested
+6. **Maintainability**: Tests are easy to understand and update
 
 ### Long-term Benefits
 - Reduced production bugs

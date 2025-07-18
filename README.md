@@ -12,7 +12,7 @@ A simple read-it-later web app that helps me save articles and organize them as 
 
 ## Why I built it
 
-I'm a former software engineer turned PM, picking up coding again after ~20 years. This app started as a practical portfolio piece — a way to vibe-code something useful that scratches a real itch.
+I'm a former software engineer turned PM, picking up coding again after ~20 years. This app is a practical portfolio piece- a way to vibe-code something useful.
 
 ## How to use it
 
@@ -36,4 +36,4 @@ Filter by tags and read distraction-free whenever you’re ready.
 
 ---
 
-🚧 Still in progress — planning to go live soon.  
+It's alive!  (Cue Lightning crash) at https://read-it-now.onrender.com

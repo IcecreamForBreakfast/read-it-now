@@ -25,6 +25,9 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Production Deployment Success**: App fully functional at https://read-it-now.onrender.com/
 - ✅ **Session Authentication Fixed**: Resolved cookie security issues for persistent login
 - ✅ **Comprehensive Debugging**: Added session monitoring for production troubleshooting
+- ✅ **Password Change Feature**: Secure password update with current password validation and 8+ character requirement
+- ✅ **iOS Token Management Reorganized**: Moved token display and regeneration to "How To Save" modal with safety warnings
+- ✅ **Cleaner Dashboard Interface**: Removed token management clutter, added collapsible password change at bottom
 
 ## User Preferences
 
@@ -36,8 +39,10 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Render deployment successful** - App fully functional at https://read-it-now.onrender.com/
 - ✅ **Session authentication fixed** - Login persists across page refreshes
 - ✅ **Article management working** - All 15 articles accessible and manageable
+- ✅ **Password change and iOS token management** - Both features implemented and tested
 - Update iOS shortcut with new URL: `/api/save/f48bc9f7830a09f4cb6b5bee33b31a15c2c65b2b24059eaf`
 - Configure UptimeRobot monitoring for health check endpoint
+- **Ready for production deployment** - Push latest changes to GitHub and deploy to Render
 
 ## Future Features Todo List
 - AI-generated short descriptions for each article

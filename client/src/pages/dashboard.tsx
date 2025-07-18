@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArticleCard } from "@/components/article-card";
 import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { PasswordChange } from "@/components/password-change";
+import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
 import { useToast } from "@/hooks/use-toast";
 import { Bookmark, Plus, LogOut, HelpCircle, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -321,6 +322,11 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Auto-Tag Analytics Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <AutoTagAnalytics />
+      </div>
 
       {/* Password Change Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">

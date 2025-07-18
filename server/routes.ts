@@ -7,6 +7,7 @@ import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
 import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
+import { autoTagger } from "./lib/auto-tagger";
 
 declare module "express-session" {
   interface SessionData {
@@ -126,14 +127,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const domain = extractDomain(normalizedUrl);
       const articleContent = await extractArticleContent(normalizedUrl);
       
-      // Save article
+      // Auto-tag the article
+      const mockArticle = {
+        id: '',
+        userId: user.id,
+        url: normalizedUrl,
+        title: articleContent.title,
+        domain,
+        content: articleContent.content,
+        tag: 'untagged',
+        savedAt: new Date()
+      };
+      const taggingResult = autoTagger.tagArticle(mockArticle);
+
+      // Save article with auto-generated tag
       const article = await storage.createArticle({
         userId: user.id,
         url: normalizedUrl,
         title: articleContent.title,
         domain,
         content: articleContent.content,
-        tag: "untagged"
+        tag: taggingResult.tag
       });
       
       res.json({ message: "Article saved successfully", article: { id: article.id, title: article.title } });
@@ -189,6 +203,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error changing password:', error);
       res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Auto-tag analytics endpoint
+  app.get("/api/auto-tag/analytics", requireAuth, async (req, res) => {
+    try {
+      const articles = await storage.getArticlesByUserId(req.session.userId!);
+      const analytics = autoTagger.generateAnalytics(articles);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error generating analytics:', error);
+      res.status(500).json({ message: "Failed to generate analytics" });
+    }
+  });
+
+  // Apply auto-tag suggestion endpoint
+  app.post("/api/auto-tag/apply-suggestion", requireAuth, async (req, res) => {
+    try {
+      const { type, category, value } = req.body;
+      
+      if (!type || !category || !value) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      if (!['domain', 'keyword'].includes(type)) {
+        return res.status(400).json({ message: "Invalid type" });
+      }
+
+      if (!['work', 'personal'].includes(category)) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+
+      autoTagger.addRule(type, category, value);
+      res.json({ message: "Rule added successfully" });
+    } catch (error) {
+      console.error('Error applying suggestion:', error);
+      res.status(500).json({ message: "Failed to apply suggestion" });
     }
   });
 
@@ -315,13 +366,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, content } = await extractArticleContent(url);
       const domain = extractDomain(url);
       
+      // Auto-tag the article
+      const mockArticle = {
+        id: '',
+        userId: req.session.userId!,
+        url,
+        title,
+        domain,
+        content,
+        tag: 'untagged',
+        savedAt: new Date()
+      };
+      const taggingResult = autoTagger.tagArticle(mockArticle);
+
       const article = await storage.createArticle({
         userId: req.session.userId!,
         url,
         title,
         domain,
         content,
-        tag: "untagged",
+        tag: taggingResult.tag,
       });
       
       res.json(article);

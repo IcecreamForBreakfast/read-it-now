@@ -1,0 +1,56 @@
+1:20:38 AM [express] serving on port 10000
+Session check: {
+  sessionId: 'XQ5Vbv9Iyu29oKjE9nIfSfBMMR9cpXCN',
+  userId: undefined,
+  cookies: undefined
+}
+1:20:55 AM [express] GET /api/auth/me 401 in 5ms :: {"message":"Authentication required"}
+1:21:05 AM [express] POST /api/auth/login 200 in 956ms :: {"user":{"id":"4c0d4a7a-7c9f-4b0c-8dd1-1a9…
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:05 AM [express] GET /api/auth/me 200 in 206ms :: {"user":{"id":"4c0d4a7a-7c9f-4b0c-8dd1-1a97183…
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:06 AM [express] GET /api/articles 200 in 546ms :: [{"id":"971c6b73-4d30-41fc-a373-68ed8a5723dc"…
+1:21:06 AM [express] GET /api/tags 200 in 707ms :: ["untagged"]
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:41 AM [express] DELETE /api/articles/39dc3675-2dea-423d-ae23-45be10a82858 200 in 506ms :: {"mes…
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:41 AM [express] GET /api/tags 200 in 211ms :: ["untagged"]
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:41 AM [express] GET /api/articles 200 in 544ms :: [{"id":"971c6b73-4d30-41fc-a373-68ed8a5723dc"…
+1:21:41 AM [express] GET /api/articles 200 in 552ms :: [{"id":"971c6b73-4d30-41fc-a373-68ed8a5723dc"…
+Session check: {
+  sessionId: 'oCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN',
+  userId: '4c0d4a7a-7c9f-4b0c-8dd1-1a971836cabf',
+  cookies: 'connect.sid=s%3AoCmQPIY8y2qub9Fk67QGNB1EvZzXZSzN.RvFVslyX03uaxOf2gTPE69YG0TedhWUeb4drXc0qLDY'
+}
+1:21:44 AM [express] GET /api/articles/db1c8d43-f720-45e2-ad23-5d1342a2528c 200 in 249ms :: {"id":"d…

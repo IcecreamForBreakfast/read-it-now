@@ -453,15 +453,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update article tag endpoint
   app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
     try {
+      const { id } = req.params;
       const { tag } = req.body;
-      const article = await storage.updateArticleTag(req.params.id, req.session.userId!, tag);
-      if (!article) {
-        return res.status(404).json({ message: "Article not found" });
+      
+      if (!tag || typeof tag !== 'string') {
+        return res.status(400).json({ message: "Tag is required" });
       }
-      res.json(article);
+      
+      const validTags = ['work', 'personal', 'uncertain', 'untagged'];
+      if (!validTags.includes(tag)) {
+        return res.status(400).json({ message: "Invalid tag value" });
+      }
+      
+      const result = await storage.updateArticleTag(id, req.session.userId!, tag);
+      
+      if (result) {
+        res.json({ message: "Tag updated successfully", article: result });
+      } else {
+        res.status(404).json({ message: "Article not found" });
+      }
     } catch (error) {
+      console.error('Error updating article tag:', error);
       res.status(500).json({ message: "Failed to update article tag" });
     }
   });

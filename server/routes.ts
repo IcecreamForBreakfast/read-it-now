@@ -19,12 +19,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const PgSession = ConnectPgSimple(session);
   
   // Session configuration with PostgreSQL store
+  const sessionStore = new PgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: "session", // Use the existing table name
+    createTableIfMissing: true,
+  });
+
+  // Add error handling for session store
+  sessionStore.on('error', (error) => {
+    console.error('Session store error:', error);
+  });
+
+  // Debug middleware to track session lifecycle
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/articles')) {
+      console.log('Request:', req.method, req.path, {
+        sessionId: req.sessionID,
+        cookies: req.headers.cookie,
+        hasSession: !!req.session
+      });
+    }
+    next();
+  });
+
   app.use(session({
-    store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      tableName: "session", // Use the existing table name
-      createTableIfMissing: true,
-    }),
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || "read-it-later-secret",
     resave: false,
     saveUninitialized: false,
@@ -44,7 +63,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Session check:', {
       sessionId: req.sessionID,
       userId: req.session?.userId,
-      cookies: req.headers.cookie
+      cookies: req.headers.cookie,
+      sessionData: req.session
     });
     if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });

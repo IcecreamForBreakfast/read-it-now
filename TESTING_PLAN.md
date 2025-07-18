@@ -20,6 +20,18 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - **Responsive Design**: Mobile-first interface
 - **State Management**: TanStack Query for server state
 
+## Historical Bug Analysis
+
+### Recurring Issues (High Priority for Testing)
+1. **Session Authentication Bugs** - Multiple session persistence issues
+2. **Cookie Security Problems** - Cookie settings causing auth failures
+3. **Article Content Parsing** - Paragraph formatting and blocked site handling
+4. **Delete Operation Failures** - 404 handling and optimistic updates
+5. **Missing API Endpoints** - Frontend calling non-existent backend routes
+6. **URL Format Handling** - iOS shortcuts sending various URL formats
+7. **Production vs Development** - Environment-specific configuration issues
+8. **User Data Isolation** - Manual tag editing auth errors
+
 ## Testing Strategy
 
 ### 1. Unit Tests (Foundation Layer)
@@ -31,12 +43,15 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - Test password hashing and verification with bcrypt
 - Test session creation, validation, and expiration
 - Test requireAuth middleware with valid/invalid sessions
-- Test session cookie handling and security settings
+- **Test session cookie handling and security settings** (CRITICAL - broken multiple times)
+- **Test session persistence across page refreshes** (CRITICAL - major historical bug)
+- **Test production vs development cookie settings** (secure flags, sameSite, httpOnly)
 - Test token generation and lookup for iOS integration
 - Test user isolation (users can only access their own data)
 - Test concurrent session handling
 - Test session cleanup on logout
 - Test authentication edge cases (malformed tokens, expired sessions)
+- **Test session debugging and monitoring** (added extensive logging due to issues)
 
 **Auto-Tagging Engine (`server/lib/auto-tagger.ts`)**
 - Test rule matching for work/personal/uncertain classification
@@ -48,8 +63,11 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 **Article Content Extraction (`server/lib/article-parser.ts`)**
 - Test HTML parsing with various website structures
 - Test metadata extraction (title, domain, content)
-- Test error handling for blocked/inaccessible sites
-- Test content sanitization and formatting
+- **Test error handling for blocked/inaccessible sites** (CRITICAL - user-friendly error messages)
+- **Test content formatting and paragraph preservation** (CRITICAL - formatting issues in reader view)
+- Test content sanitization and security
+- **Test timeout handling for slow/unresponsive sites**
+- **Test various content types** (news articles, blog posts, documentation)
 
 **Database Operations (`server/storage.ts`)**
 - Test CRUD operations for users, articles, and tags
@@ -113,18 +131,28 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - `POST /api/save/:token` - Token-based article saving
 - `POST /api/generate-token` - Personal token generation
 
+**Critical Bug-Prone Areas (Based on History)**
+- **Missing API Endpoints** - Test that all frontend API calls have corresponding backend routes
+- **Optimistic Update Failures** - Test delete operations with 404 handling and graceful recovery
+- **URL Format Variations** - Test iOS shortcuts with different URL formats (array, object, string)
+- **Production Environment** - Test deployment-specific configurations (cookie settings, CORS)
+- **User Data Isolation** - Test cross-user access prevention (manual tag editing auth errors)
+
 #### Database Integration Tests
-**Priority: Medium**
+**Priority: High** (Upgraded due to historical issues)
 
 **Session Management**
-- Test session persistence across requests
-- Test session expiration handling
-- Test concurrent user sessions
+- **Test session persistence across requests** (CRITICAL - major bug)
+- **Test session expiration handling** (CRITICAL - authentication failures)
+- **Test concurrent user sessions** (CRITICAL - data isolation)
+- **Test session cleanup on logout** (CRITICAL - security)
+- **Test session store errors and recovery** (Added error handling due to issues)
 
 **Article Processing Pipeline**
 - Test end-to-end article saving flow
 - Test auto-tagging integration
-- Test error recovery scenarios
+- **Test error recovery scenarios** (CRITICAL - graceful degradation)
+- **Test optimistic updates with backend failures** (CRITICAL - UI consistency)
 
 ### 3. End-to-End Tests (User Journey)
 
@@ -223,7 +251,7 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
    - Data integrity constraints
 
 ### Phase 3: User Experience (Week 3)
-**Goal: End-to-end user flow validation**
+**Goal: End-to-end user flow validation with bug regression focus**
 
 1. **E2E Test Framework**
    - Install Playwright or Cypress
@@ -234,6 +262,13 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
    - New user onboarding
    - Article saving and management
    - iOS integration workflow
+
+3. **Bug Regression Tests (CRITICAL)**
+   - **Session persistence across page refreshes** (test actual user behavior)
+   - **Article deletion with optimistic updates** (test UI consistency)
+   - **iOS shortcut integration** (test various URL formats)
+   - **Manual tag editing workflow** (test complete edit flow)
+   - **Production deployment behavior** (test with production-like settings)
 
 ### Phase 4: Performance & Edge Cases (Week 4)
 **Goal: Ensure robustness and performance**
@@ -326,11 +361,31 @@ This document outlines a comprehensive testing strategy for the Read-It-Later ap
 - Better code quality and architecture
 - Confident deployments
 
+## Additional Testing Considerations Based on Project History
+
+### Environment-Specific Testing
+- **Production Configuration Tests** - Test cookie settings, CORS, security headers
+- **Development vs Production Parity** - Ensure test environment matches production
+- **Database Migration Tests** - Test schema changes and data integrity
+- **Health Check Integration** - Test monitoring endpoints and uptime requirements
+
+### Frontend-Backend Contract Testing
+- **API Contract Tests** - Ensure frontend calls match backend endpoints
+- **Error Response Testing** - Test user-friendly error messages
+- **Loading State Testing** - Test optimistic updates and loading indicators
+- **Cache Invalidation Testing** - Test TanStack Query cache updates
+
+### Deployment & Monitoring Tests
+- **Deployment Verification** - Test critical paths after deployment
+- **Health Check Monitoring** - Test `/api/health` endpoint reliability
+- **Session Store Health** - Test PostgreSQL session store connectivity
+- **Error Logging** - Test comprehensive error logging and debugging
+
 ## Next Steps
 
-1. **Immediate**: Setup basic testing infrastructure
-2. **Short-term**: Implement critical unit tests for auto-tagging
-3. **Medium-term**: Add comprehensive API integration tests
-4. **Long-term**: Full E2E test suite with performance monitoring
+1. **Immediate**: Setup basic testing infrastructure with session testing focus
+2. **Short-term**: Implement critical auth/session tests (highest bug risk)
+3. **Medium-term**: Add API contract tests and error handling
+4. **Long-term**: Full E2E test suite with production environment testing
 
-This testing plan provides a roadmap for building robust test coverage that will catch regressions early and enable confident feature development.
+This testing plan addresses the specific bug patterns from the project history and provides comprehensive coverage for the areas that have caused the most issues.

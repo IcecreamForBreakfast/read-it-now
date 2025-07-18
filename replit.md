@@ -40,6 +40,7 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **iOS Integration Tests**: Token-based article saving tested with user isolation and high-frequency scenarios
 - ✅ **API Contract Tests**: All endpoints tested with proper authorization and error handling
 - ✅ **Automated Testing Pipeline**: Pre-commit hooks and GitHub Actions prevent broken code from reaching production
+- ✅ **Production Auth Bug Fixed**: Password reset resolved login issue - tests now include production data validation
 
 ## User Preferences
 

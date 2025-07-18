@@ -31,6 +31,10 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Auto-Tagging System Implemented**: Rule-based intelligent tagging of articles as "work", "personal", or "uncertain"
 - ✅ **Analytics Dashboard**: Shows tag distribution, performance metrics, and smart rule suggestions
 - ✅ **Auto-Tagging Successfully Tested**: System correctly categorized articles with work/uncertain tags
+- ✅ **Manual Tag Editing**: Fixed missing PATCH endpoint - users can now click edit icon to manually correct tags
+- ✅ **Batch Retagging**: Added "Retag existing untagged articles" feature to process historical articles
+- ✅ **Enhanced Auto-Tagging Rules**: Expanded keyword/domain recognition to reduce "uncertain" classifications
+- ✅ **Complete Tagging Workflow**: Both automatic and manual tagging working seamlessly with real-time analytics updates
 
 ## User Preferences
 

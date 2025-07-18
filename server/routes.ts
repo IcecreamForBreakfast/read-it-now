@@ -243,6 +243,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch retag existing articles endpoint
+  app.post("/api/auto-tag/retag-existing", requireAuth, async (req, res) => {
+    try {
+      const articles = await storage.getArticlesByUserId(req.session.userId!);
+      const untaggedArticles = articles.filter(article => 
+        article.tag === 'untagged' || !article.tag
+      );
+
+      let updated = 0;
+      const results = [];
+
+      for (const article of untaggedArticles) {
+        const taggingResult = autoTagger.tagArticle(article);
+        
+        if (taggingResult.tag !== 'untagged') {
+          const updatedArticle = await storage.updateArticleTag(
+            article.id, 
+            req.session.userId!, 
+            taggingResult.tag
+          );
+          
+          if (updatedArticle) {
+            updated++;
+            results.push({
+              id: article.id,
+              title: article.title,
+              oldTag: article.tag,
+              newTag: taggingResult.tag,
+              confidence: taggingResult.confidence,
+              reasons: taggingResult.reasons
+            });
+          }
+        }
+      }
+
+      res.json({
+        message: `Successfully retagged ${updated} articles`,
+        totalProcessed: untaggedArticles.length,
+        updated,
+        results
+      });
+    } catch (error) {
+      console.error('Error retagging articles:', error);
+      res.status(500).json({ message: "Failed to retag articles" });
+    }
+  });
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

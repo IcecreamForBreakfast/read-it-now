@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, Target, CheckCircle, X, Plus } from "lucide-react";
+import { TrendingUp, Target, CheckCircle, X, Plus, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -52,6 +52,29 @@ export function AutoTagAnalytics() {
     onError: (error) => {
       toast({
         title: "Failed to apply suggestion",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const retagExistingMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/auto-tag/retag-existing", {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auto-tag/analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
+      toast({
+        title: "Articles retagged",
+        description: `${data.message}. ${data.updated} articles updated.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to retag articles",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
@@ -206,6 +229,32 @@ export function AutoTagAnalytics() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Batch Retag Action */}
+                <div>
+                  <h4 className="font-medium text-slate-800 mb-3">Actions</h4>
+                  <Button
+                    onClick={() => retagExistingMutation.mutate()}
+                    disabled={retagExistingMutation.isPending}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {retagExistingMutation.isPending ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Retagging articles...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Retag existing untagged articles
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2">
+                    This will apply auto-tagging to all existing articles that are currently untagged.
+                  </p>
                 </div>
               </div>
             )}

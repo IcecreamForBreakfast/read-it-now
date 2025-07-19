@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Notes App - Option 1 Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1f2937;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .new-note-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .new-note-btn:hover {
+            background: #2563eb;
+        }
+
+        .tabs-container {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.75rem;
+            margin-left: 0.5rem;
+            min-width: 1.25rem;
+            text-align: center;
+        }
+
+        .tab.active .tab-badge {
+            background: #3b82f6;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .state-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .state-icon {
+            font-size: 1.5rem;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .note-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+        }
+
+        .note-card:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .note-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            flex: 1;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: 1px solid #d1d5db;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .action-btn.save {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .action-btn.save:hover {
+            background: #059669;
+        }
+
+        .action-btn.archive {
+            background: #6b7280;
+            color: white;
+            border-color: #6b7280;
+        }
+
+        .action-btn.archive:hover {
+            background: #4b5563;
+        }
+
+        .action-btn.delete {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .action-btn.delete:hover {
+            background: #dc2626;
+        }
+
+        .note-content {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .note-annotation {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0.375rem;
+            font-style: italic;
+        }
+
+        .note-annotation::before {
+            content: "📌 ";
+            font-style: normal;
+        }
+
+        .note-metadata {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .note-tag {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+
+        .note-tag.personal {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .note-tag.work {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .note-tag.uncertain {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .note-domain {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .note-type {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .tabs-container {
+                padding: 0 1rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .note-actions {
+                flex-direction: column;
+                margin-left: 0.5rem;
+            }
+
+            .note-metadata {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="logo">📝 Notes</div>
+            <button class="new-note-btn" onclick="showNewNoteModal()">+ New Note</button>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('inbox')">
+                    📥 Inbox <span class="tab-badge">3</span>
+                </button>
+                <button class="tab" onclick="switchTab('saved')">
+                    💾 Saved <span class="tab-badge">17</span>
+                </button>
+                <button class="tab" onclick="switchTab('archived')">
+                    🗂️ Archived <span class="tab-badge">5</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Inbox Tab Content -->
+        <div id="inbox" class="tab-content active">
+            <div class="content">
+                <div class="state-header">
+                    <span class="state-icon">📥</span>
+                    Inbox - Items to Review
+                </div>
+                
+                <input type="text" class="search-bar" placeholder="🔍 Search inbox notes...">
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Test Manual Note</div>
+                        <div class="note-actions">
+                            <button class="action-btn">📝</button>
+                            <button class="action-btn save">💾 Save</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        This is a test manual note for the unified Notes app functionality. Need to add more features soon.
+                    </div>
+                    <div class="note-annotation">
+                        Important for testing the unified app functionality. Need to add more features soon.
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag personal">personal</span>
+                        <span class="note-type">📝 manual note</span>
+                        <span>1 hour ago</span>
+                    </div>
+                </div>
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Trending repositories on GitHub today</div>
+                        <div class="note-actions">
+                            <button class="action-btn">📝</button>
+                            <button class="action-btn save">💾 Save</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        Discover trending repositories based on stars, forks, and recent activity across different programming languages.
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag work">work</span>
+                        <a href="#" class="note-domain">🔗 github.com</a>
+                        <span class="note-type">🔗 article</span>
+                        <span>2 hours ago</span>
+                    </div>
+                </div>
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Meeting Notes - Q1 Planning</div>
+                        <div class="note-actions">
+                            <button class="action-btn">📝</button>
+                            <button class="action-btn save">💾 Save</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        Key discussion points: Budget allocation, team expansion, project timelines...
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag work">work</span>
+                        <span class="note-type">📝 manual note</span>
+                        <span>3 hours ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Tab Content -->
+        <div id="saved" class="tab-content">
+            <div class="content">
+                <div class="state-header">
+                    <span class="state-icon">💾</span>
+                    Saved - Reference Material
+                </div>
+                
+                <input type="text" class="search-bar" placeholder="🔍 Search saved notes...">
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Article from example.com</div>
+                        <div class="note-actions">
+                            <button class="action-btn">📝</button>
+                            <button class="action-btn archive">🗂️ Archive</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        This article couldn't be automatically extracted because the website blocked our request. You can still read the original by clicking above.
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag">untagged</span>
+                        <a href="#" class="note-domain">🔗 example.com</a>
+                        <span class="note-type">🔗 article</span>
+                        <span>7 days ago</span>
+                    </div>
+                </div>
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Important Recipe Notes</div>
+                        <div class="note-actions">
+                            <button class="action-btn">📝</button>
+                            <button class="action-btn archive">🗂️ Archive</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        Grandma's secret ingredients and cooking tips that I need to remember for the holidays.
+                    </div>
+                    <div class="note-annotation">
+                        Remember to double the vanilla extract - that's the secret!
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag personal">personal</span>
+                        <span class="note-type">📝 manual note</span>
+                        <span>2 weeks ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Archived Tab Content -->
+        <div id="archived" class="tab-content">
+            <div class="content">
+                <div class="state-header">
+                    <span class="state-icon">🗂️</span>
+                    Archived - Completed Items
+                </div>
+                
+                <input type="text" class="search-bar" placeholder="🔍 Search archived notes...">
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Completed Project Documentation</div>
+                        <div class="note-actions">
+                            <button class="action-btn save">💾 Restore</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        Final documentation for the mobile app project. All deliverables completed and approved.
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag work">work</span>
+                        <span class="note-type">📝 manual note</span>
+                        <span>1 month ago</span>
+                    </div>
+                </div>
+
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-title">Read Article: Best Practices Guide</div>
+                        <div class="note-actions">
+                            <button class="action-btn save">💾 Restore</button>
+                            <button class="action-btn delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        Comprehensive guide on software development best practices. Already implemented the suggestions.
+                    </div>
+                    <div class="note-metadata">
+                        <span class="note-tag work">work</span>
+                        <a href="#" class="note-domain">🔗 dev.to</a>
+                        <span class="note-type">🔗 article</span>
+                        <span>2 months ago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showNewNoteModal() {
+            alert('New Note modal would open here.\n\nOptions:\n• Create manual note\n• Save article from URL\n• Import from clipboard');
+        }
+
+        // Add some interactive feedback
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('action-btn')) {
+                const action = e.target.textContent.trim();
+                if (action.includes('Save')) {
+                    e.target.style.background = '#059669';
+                    setTimeout(() => {
+                        alert('Note moved to Saved! ✅');
+                        e.target.style.background = '';
+                    }, 200);
+                } else if (action.includes('Archive')) {
+                    e.target.style.background = '#374151';
+                    setTimeout(() => {
+                        alert('Note archived! 🗂️');
+                        e.target.style.background = '';
+                    }, 200);
+                } else if (action.includes('📝')) {
+                    alert('Annotation editor would open here.\n\nYou could add personal notes, thoughts, or references to this content.');
+                } else if (action.includes('🗑️')) {
+                    if (confirm('Are you sure you want to delete this note?')) {
+                        e.target.closest('.note-card').style.opacity = '0.5';
+                        setTimeout(() => {
+                            alert('Note deleted! 🗑️');
+                            e.target.closest('.note-card').style.opacity = '';
+                        }, 500);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

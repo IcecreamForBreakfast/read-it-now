@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { users, articles, type User, type Article, type InsertUser, type InsertArticle } from "@shared/schema";
+import { users, notes, articles, type User, type Note, type Article, type InsertUser, type InsertNote, type InsertArticle } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
+import crypto from "crypto";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -20,7 +21,16 @@ export interface IStorage {
   generatePersonalToken(userId: string): Promise<string>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   
-  // Article operations
+  // Note operations (unified concept)
+  getNotesByUserId(userId: string, tag?: string, state?: string): Promise<Note[]>;
+  getNoteById(id: string): Promise<Note | undefined>;
+  createNote(note: InsertNote & { userId: string }): Promise<Note>;
+  deleteNote(id: string, userId: string): Promise<boolean>;
+  updateNoteTag(id: string, userId: string, tag: string): Promise<Note | undefined>;
+  updateNoteState(id: string, userId: string, state: string): Promise<Note | undefined>;
+  updateNoteAnnotation(id: string, userId: string, annotation: string): Promise<Note | undefined>;
+  
+  // Article operations (backward compatibility)
   getArticlesByUserId(userId: string, tag?: string): Promise<Article[]>;
   getArticleById(id: string): Promise<Article | undefined>;
   createArticle(article: InsertArticle & { userId: string }): Promise<Article>;
@@ -125,11 +135,86 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  // New Note operations (unified concept)
+  async getNotesByUserId(userId: string, tag?: string, state?: string): Promise<Note[]> {
+    let query = db.select().from(notes).where(eq(notes.userId, userId));
+    
+    const conditions = [eq(notes.userId, userId)];
+    
+    if (tag && tag !== "all") {
+      conditions.push(eq(notes.tag, tag));
+    }
+    
+    if (state && state !== "all") {
+      conditions.push(eq(notes.state, state));
+    }
+    
+    const result = await db
+      .select()
+      .from(notes)
+      .where(and(...conditions))
+      .orderBy(desc(notes.createdAt));
+    
+    return result;
+  }
+
+  async getNoteById(id: string): Promise<Note | undefined> {
+    const result = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createNote(note: InsertNote & { userId: string }): Promise<Note> {
+    const result = await db.insert(notes).values(note).returning();
+    return result[0];
+  }
+
+  async deleteNote(id: string, userId: string): Promise<boolean> {
+    const existingNote = await db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .limit(1);
+    
+    if (existingNote.length === 0) {
+      return false;
+    }
+    
+    await db.delete(notes).where(and(eq(notes.id, id), eq(notes.userId, userId)));
+    return true;
+  }
+
+  async updateNoteTag(id: string, userId: string, tag: string): Promise<Note | undefined> {
+    const result = await db
+      .update(notes)
+      .set({ tag, updatedAt: new Date() })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async updateNoteState(id: string, userId: string, state: string): Promise<Note | undefined> {
+    const result = await db
+      .update(notes)
+      .set({ state, updatedAt: new Date() })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async updateNoteAnnotation(id: string, userId: string, annotation: string): Promise<Note | undefined> {
+    const result = await db
+      .update(notes)
+      .set({ annotation, updatedAt: new Date() })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
   async getTagsByUserId(userId: string): Promise<string[]> {
     const result = await db
-      .selectDistinct({ tag: articles.tag })
-      .from(articles)
-      .where(eq(articles.userId, userId));
+      .selectDistinct({ tag: notes.tag })
+      .from(notes)
+      .where(eq(notes.userId, userId));
     return result.map(r => r.tag);
   }
 }

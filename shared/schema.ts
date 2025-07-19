@@ -10,29 +10,41 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const articles = pgTable("articles", {
+// Renamed from articles to notes for unified concept
+export const notes = pgTable("notes", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  url: text("url").notNull(),
+  url: text("url"), // Optional - allows manual notes without URLs
   title: text("title").notNull(),
-  domain: text("domain").notNull(),
+  domain: text("domain"), // Optional - only for URL-based notes
   content: text("content"),
+  annotation: text("annotation"), // User-added notes/comments
   tag: text("tag").notNull().default("untagged"),
-  savedAt: timestamp("saved_at").defaultNow().notNull(),
+  state: text("state").notNull().default("inbox"), // inbox | saved | archived
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Keep articles table reference for backward compatibility during migration
+export const articles = notes;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
 });
 
-export const insertArticleSchema = createInsertSchema(articles).pick({
+export const insertNoteSchema = createInsertSchema(notes).pick({
   url: true,
   title: true,
   domain: true,
   content: true,
+  annotation: true,
   tag: true,
+  state: true,
 });
+
+// Backward compatibility
+export const insertArticleSchema = insertNoteSchema;
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -61,9 +73,11 @@ export const saveArticleSchema = z.object({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertArticle = z.infer<typeof insertArticleSchema>;
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type InsertArticle = InsertNote; // Backward compatibility
 export type User = typeof users.$inferSelect;
-export type Article = typeof articles.$inferSelect;
+export type Note = typeof notes.$inferSelect;
+export type Article = Note; // Backward compatibility
 export type LoginData = z.infer<typeof loginSchema>;
 export type MagicLinkData = z.infer<typeof magicLinkSchema>;
 export type SaveArticleData = z.infer<typeof saveArticleSchema>;

@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 // @ts-ignore
 import ConnectPgSimple from "connect-pg-simple";
-import { insertUserSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
+import { insertUserSchema, insertNoteSchema, loginSchema, magicLinkSchema, saveArticleSchema } from "@shared/schema";
 import { extractArticleContent, extractDomain } from "./lib/article-parser";
 import { autoTagger } from "./lib/auto-tagger";
 
@@ -511,6 +511,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, article });
     } catch (error) {
       res.status(500).json({ success: false, message: error instanceof Error ? error.message : "Failed to save article" });
+    }
+  });
+
+  // ===================
+  // NOTES API (Unified)
+  // ===================
+
+  // Get all notes with filtering
+  app.get("/api/notes", requireAuth, async (req, res) => {
+    try {
+      const { tag, state } = req.query;
+      const notes = await storage.getNotesByUserId(
+        req.session.userId!,
+        tag as string,
+        state as string
+      );
+      res.json(notes);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      res.status(500).json({ message: "Failed to fetch notes" });
+    }
+  });
+
+  // Get specific note by ID
+  app.get("/api/notes/:id", requireAuth, async (req, res) => {
+    try {
+      const note = await storage.getNoteById(req.params.id);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      
+      // Ensure note belongs to current user
+      if (note.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(note);
+    } catch (error) {
+      console.error('Error fetching note:', error);
+      res.status(500).json({ message: "Failed to fetch note" });
+    }
+  });
+
+  // Create new note (manual or URL-based)
+  app.post("/api/notes", requireAuth, async (req, res) => {
+    try {
+      const noteData = insertNoteSchema.parse(req.body);
+      
+      // If URL provided, fetch content like articles
+      if (noteData.url) {
+        // Normalize URL
+        let normalizedUrl = noteData.url.trim();
+        if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+          normalizedUrl = `https://${normalizedUrl}`;
+        }
+        
+        const domain = extractDomain(normalizedUrl);
+        const articleContent = await extractArticleContent(normalizedUrl);
+        
+        // Auto-tag URL-based notes and set to inbox
+        const mockNote = {
+          id: '',
+          userId: req.session.userId!,
+          url: normalizedUrl,
+          title: articleContent.title || noteData.title,
+          domain,
+          content: articleContent.content,
+          tag: 'untagged',
+          state: 'inbox',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          annotation: noteData.annotation || null
+        };
+        const taggingResult = autoTagger.tagArticle(mockNote);
+        
+        const note = await storage.createNote({
+          userId: req.session.userId!,
+          url: normalizedUrl,
+          title: articleContent.title || noteData.title,
+          domain,
+          content: articleContent.content,
+          annotation: noteData.annotation,
+          tag: taggingResult.tag,
+          state: noteData.state || 'inbox'
+        });
+        
+        res.json(note);
+      } else {
+        // Manual note creation
+        const note = await storage.createNote({
+          userId: req.session.userId!,
+          ...noteData,
+          state: noteData.state || 'inbox'
+        });
+        
+        res.json(note);
+      }
+    } catch (error) {
+      console.error('Error creating note:', error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create note" });
+    }
+  });
+
+  // Update note state (inbox → saved → archived)
+  app.patch("/api/notes/:id/state", requireAuth, async (req, res) => {
+    try {
+      const { state } = req.body;
+      if (!['inbox', 'saved', 'archived'].includes(state)) {
+        return res.status(400).json({ message: "Invalid state. Must be inbox, saved, or archived" });
+      }
+      
+      const note = await storage.updateNoteState(req.params.id, req.session.userId!, state);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found or access denied" });
+      }
+      
+      res.json(note);
+    } catch (error) {
+      console.error('Error updating note state:', error);
+      res.status(500).json({ message: "Failed to update note state" });
+    }
+  });
+
+  // Update note annotation
+  app.patch("/api/notes/:id/annotation", requireAuth, async (req, res) => {
+    try {
+      const { annotation } = req.body;
+      const note = await storage.updateNoteAnnotation(req.params.id, req.session.userId!, annotation);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found or access denied" });
+      }
+      
+      res.json(note);
+    } catch (error) {
+      console.error('Error updating note annotation:', error);
+      res.status(500).json({ message: "Failed to update note annotation" });
+    }
+  });
+
+  // Update note tag (compatible with existing functionality)
+  app.patch("/api/notes/:id/tag", requireAuth, async (req, res) => {
+    try {
+      const { tag } = req.body;
+      const note = await storage.updateNoteTag(req.params.id, req.session.userId!, tag);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found or access denied" });
+      }
+      
+      res.json(note);
+    } catch (error) {
+      console.error('Error updating note tag:', error);
+      res.status(500).json({ message: "Failed to update note tag" });
+    }
+  });
+
+  // Delete note
+  app.delete("/api/notes/:id", requireAuth, async (req, res) => {
+    try {
+      const success = await storage.deleteNote(req.params.id, req.session.userId!);
+      if (!success) {
+        return res.status(404).json({ message: "Note not found or access denied" });
+      }
+      
+      res.json({ message: "Note deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      res.status(500).json({ message: "Failed to delete note" });
     }
   });
 

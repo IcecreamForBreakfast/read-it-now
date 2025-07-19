@@ -1,0 +1,132 @@
+# 🧾 Unified Notes App – Requirements Doc
+
+**Goal:** Merge "Read It Now" and "Recipe Digger" into a single flexible app for capturing, processing, and referencing content — including links, articles, and original notes.
+
+---
+
+## 1. 🎯 Overview & Goals
+
+This app unifies two workflows:
+- **Read It Later**: Quickly save URLs to a reading backlog via iOS Shortcut or UI.
+- **Reference Management**: Store, annotate, and search articles, recipes, and personal notes for long-term reuse.
+
+The unified experience treats all content as **Notes** — flexible objects that can be saved, archived, or ignored after reading.
+
+---
+
+## 2. 🧱 Core Concepts
+
+### 🔹 Note
+The fundamental unit. A Note may include:
+- A URL (optional)
+- Title, extracted or user-supplied
+- Content (e.g., extracted text or user-entered text)
+- Tags (auto or manual)
+- User annotations (plain text, with light formatting like bullet lists)
+- Created and updated timestamps
+
+### 🔹 States
+Each Note can be in **one of three exclusive states**:
+- **Inbox**: Newly added, unread/unclassified
+- **Saved**: Reference-worthy (shows up in Library)
+- **Archived**: Read and discarded (not shown by default)
+
+---
+
+## 3. 🗂️ Data Model (Simplified)
+
+```ts
+type Note = {
+  id: string
+  url?: string
+  title: string
+  content: string
+  annotation?: string
+  tags: string[]
+  state: "inbox" | "saved" | "archived"
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+---
+
+## 4. 🧭 User Modes & Flows
+
+### 📥 Mode 1: Inbox (Read It Later)
+- **Purpose**: Review content backlog
+- **Source**: iOS shortcut or manual add
+- **UI Focus**: Reading experience, quick triage
+- **Common Actions**:
+  - Read article
+  - Add tags
+  - Add annotation
+  - Mark as:
+    - **Saved** → goes to reference library
+    - **Archived** → hidden by default
+
+### 📚 Mode 2: Reference Library
+- **Purpose**: Search, organize, and revisit content
+- **Includes**:
+  - Saved articles
+  - Original notes (user-created, no URL)
+- **UI Focus**: Search, filtering, tag navigation, detailed views
+- **Common Actions**:
+  - Edit content or annotations
+  - Organize with tags
+  - Create a new Note manually
+  - Search by tag, keyword, or state
+
+---
+
+## 5. 🔧 Core Feature Requirements
+
+### 🧭 Navigation & Views
+- Top-level views:
+  - Inbox
+  - Library
+- Optional filter: Archived Notes (hidden by default)
+
+### 📝 Note Management
+- Create Note (manual or via iOS Shortcut)
+- Edit title, content, and annotation
+- Add/remove tags (shared tag system)
+- Change state (Inbox → Saved or Archived)
+
+### 🔍 Search & Filters
+- Free-text search (Fuse.js or similar)
+- Filter by:
+  - State (Inbox, Saved, Archived)
+  - Presence of URL
+  - Tags
+- Tags shared across all note types
+
+### 📲 iOS Shortcut Integration
+- Endpoint for saving a URL (adds as Inbox item)
+- Auto-tag as “Work” or “Personal” based on rules
+- Lightweight confirmation/feedback
+
+---
+
+## 6. ✨ Stretch Features (Nice-to-Have)
+
+| Feature | Description |
+|--------|-------------|
+| Content Extraction | Pull article body from URL (Mercury, Readability, etc.) |
+| Markdown Annotation | Allow markdown in user annotations |
+| Tag Auto-suggestions | Based on content or previously used tags |
+| Smart Sorting | e.g., sort Inbox by estimated read time or source |
+| Archive Cleanup | Auto-archive notes after X days in Inbox |
+| Analytics | Basic tracking of saved/archived items over time |
+
+---
+
+## 7. 🏗️ Tech Stack (Planned)
+
+| Layer | Stack |
+|------|-------|
+| Frontend | React + TypeScript (existing) |
+| Backend | Node.js + Express |
+| DB | Supabase (PostgreSQL) |
+| Hosting | Render |
+| Search | Fuse.js (client-side fuzzy search) |

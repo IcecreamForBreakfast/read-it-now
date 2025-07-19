@@ -25,7 +25,8 @@ export const notes = pgTable("notes", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Keep articles table reference for backward compatibility during migration
+// Keep articles table reference for backward compatibility during migration  
+// This allows existing code to work while using the unified notes table
 export const articles = notes;
 
 export const insertUserSchema = createInsertSchema(users).pick({

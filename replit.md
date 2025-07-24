@@ -48,6 +48,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **API Testing Complete**: All endpoints functional - manual notes, state transitions, annotations working
 - ✅ **UI Cleanup Complete**: Removed redundant "How to Save" button, updated help modal with accurate iOS shortcut instructions  
 - ✅ **iOS Token Management**: Reorganized behind collapsible drawer with complete 12-step setup guide
+- ✅ **Backend Debugging Complete**: Fixed schema compatibility issues between Article and Notes formats
+- ✅ **Articles Endpoint Working**: All 500 errors resolved, data retrieval functional for both user accounts
 
 ## User Preferences
 

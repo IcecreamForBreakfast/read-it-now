@@ -135,22 +135,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: articleContent.title,
         domain,
         content: articleContent.content,
+        annotation: null,
         tag: 'untagged',
-        savedAt: new Date()
+        state: 'inbox',
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       const taggingResult = autoTagger.tagArticle(mockArticle);
 
-      // Save article with auto-generated tag
-      const article = await storage.createArticle({
+      // Save article with auto-generated tag in inbox state (unified Notes system)
+      const note = await storage.createNote({
         userId: user.id,
         url: normalizedUrl,
         title: articleContent.title,
         domain,
         content: articleContent.content,
-        tag: taggingResult.tag
+        tag: taggingResult.tag,
+        state: 'inbox' // iOS articles go to inbox for review
       });
       
-      res.json({ message: "Article saved successfully", article: { id: article.id, title: article.title } });
+      res.json({ message: "Article saved successfully", note: { id: note.id, title: note.title } });
     } catch (error) {
       console.error('Error saving article via token:', error);
       res.status(400).json({ message: error instanceof Error ? error.message : "Failed to save article" });
@@ -386,9 +390,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/articles", requireAuth, async (req, res) => {
     try {
       const tag = req.query.tag as string;
+      console.log('Fetching articles for user:', req.session.userId!, 'tag:', tag);
       const articles = await storage.getArticlesByUserId(req.session.userId!, tag);
+      console.log('Articles fetched:', articles.length);
       res.json(articles);
     } catch (error) {
+      console.error('Error in GET /api/articles:', error);
       res.status(500).json({ message: "Failed to fetch articles" });
     }
   });
@@ -421,18 +428,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         domain,
         content,
+        annotation: null,
         tag: 'untagged',
-        savedAt: new Date()
+        state: 'saved',
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       const taggingResult = autoTagger.tagArticle(mockArticle);
 
-      const article = await storage.createArticle({
+      // Create article via unified Notes system (manual saves go to "saved" state)
+      const article = await storage.createNote({
         userId: req.session.userId!,
         url,
         title,
         domain,
         content,
         tag: taggingResult.tag,
+        state: 'saved' // Manual article saves go directly to saved state
       });
       
       res.json(article);

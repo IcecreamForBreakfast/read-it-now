@@ -46,6 +46,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Phase 2 Complete**: Notes API endpoints implemented with state management and annotation support
 - ✅ **Migration Successful**: 17 articles migrated to unified notes schema with full backward compatibility
 - ✅ **API Testing Complete**: All endpoints functional - manual notes, state transitions, annotations working
+- ✅ **UI Cleanup Complete**: Removed redundant "How to Save" button, updated help modal with accurate iOS shortcut instructions  
+- ✅ **iOS Token Management**: Reorganized behind collapsible drawer with complete 12-step setup guide
 
 ## User Preferences
 

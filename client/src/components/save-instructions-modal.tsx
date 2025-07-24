@@ -110,57 +110,57 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
               Save articles directly from Safari by setting up a custom iOS shortcut.
             </p>
             
-            {(user as any)?.user?.personalToken ? (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-sm font-medium text-green-900">iOS Shortcut URL (Copy This)</Label>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Input
-                      value={`${window.location.origin}/api/save/${(user as any)?.user?.personalToken}`}
-                      readOnly
-                      className="bg-white text-sm font-mono"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyShortcutUrl}
-                      className="shrink-0 bg-green-600 text-white hover:bg-green-700"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-green-700 text-xs mt-1">Use this URL in step 5 of the setup instructions below</p>
-                </div>
+            <Collapsible open={showTokenGeneration} onOpenChange={setShowTokenGeneration}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full bg-green-600 text-white hover:bg-green-700">
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  {(user as any)?.user?.personalToken ? "Manage iOS Token" : "Generate Token for iOS"}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {(user as any)?.user?.personalToken ? (
+                  <div className="space-y-3 mt-3">
+                    <div>
+                      <Label className="text-sm font-medium text-green-900">iOS Shortcut URL (Copy This)</Label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Input
+                          value={`${window.location.origin}/api/save/${(user as any)?.user?.personalToken}`}
+                          readOnly
+                          className="bg-white text-sm font-mono"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyShortcutUrl}
+                          className="shrink-0 bg-green-600 text-white hover:bg-green-700"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-green-700 text-xs mt-1">Use this URL in step 5 of the setup instructions below</p>
+                    </div>
 
-                <div className="bg-green-100 rounded p-3 text-sm text-green-800">
-                  <p className="font-medium mb-2">Complete iOS Shortcut Setup:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-xs">
-                    <li>Copy the iOS Shortcut URL above</li>
-                    <li>Open the Shortcuts app on your iPhone</li>
-                    <li>Tap the "+" to create a new shortcut</li>
-                    <li>Tap "Add Action" and search for "Get Contents of URL"</li>
-                    <li>Paste the copied URL in the URL field</li>
-                    <li>Set Method to "POST"</li>
-                    <li>Add another action: "Get Text from Input"</li>
-                    <li>Add "Get URLs from Input" action</li>
-                    <li>Connect the URL output to the "Get Contents of URL" request body</li>
-                    <li>Tap the settings icon and enable "Use with Share Sheet"</li>
-                    <li>Name your shortcut "Read It Later" and save</li>
-                    <li>Test by sharing any webpage from Safari</li>
-                  </ol>
-                  <div className="mt-2 p-2 bg-green-200 rounded text-xs">
-                    <strong>Usage:</strong> In Safari, tap Share → Read It Later to save articles instantly!
-                  </div>
-                </div>
+                    <div className="bg-green-100 rounded p-3 text-sm text-green-800">
+                      <p className="font-medium mb-2">Complete iOS Shortcut Setup:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-xs">
+                        <li>Copy the iOS Shortcut URL above</li>
+                        <li>Open the Shortcuts app on your iPhone</li>
+                        <li>Tap the "+" to create a new shortcut</li>
+                        <li>Tap "Add Action" and search for "Get Contents of URL"</li>
+                        <li>Paste the copied URL in the URL field</li>
+                        <li>Set Method to "POST"</li>
+                        <li>Add another action: "Get Text from Input"</li>
+                        <li>Add "Get URLs from Input" action</li>
+                        <li>Connect the URL output to the "Get Contents of URL" request body</li>
+                        <li>Tap the settings icon and enable "Use with Share Sheet"</li>
+                        <li>Name your shortcut "Read It Later" and save</li>
+                        <li>Test by sharing any webpage from Safari</li>
+                      </ol>
+                      <div className="mt-2 p-2 bg-green-200 rounded text-xs">
+                        <strong>Usage:</strong> In Safari, tap Share → Read It Later to save articles instantly!
+                      </div>
+                    </div>
 
-                <Collapsible open={showTokenGeneration} onOpenChange={setShowTokenGeneration}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Generate New Token
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
                     <Alert className="mt-2">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
@@ -177,21 +177,21 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
                     >
                       {generateTokenMutation.isPending ? "Generating..." : "I Understand - Generate New Token"}
                     </Button>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <Button
-                  onClick={() => generateTokenMutation.mutate()}
-                  disabled={generateTokenMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {generateTokenMutation.isPending ? "Generating..." : "Generate Personal Token"}
-                </Button>
-                <p className="text-green-700 text-xs mt-2">Required to create your custom iOS shortcut</p>
-              </div>
-            )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Button
+                      onClick={() => generateTokenMutation.mutate()}
+                      disabled={generateTokenMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {generateTokenMutation.isPending ? "Generating..." : "Generate Personal Token"}
+                    </Button>
+                    <p className="text-green-700 text-xs mt-2">Required to create your custom iOS shortcut</p>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
       </DialogContent>

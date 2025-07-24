@@ -82,57 +82,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getArticlesByUserId(userId: string, tag?: string): Promise<Article[]> {
+    // Use the notes table but return Article format for backward compatibility
+    const conditions = [eq(notes.userId, userId)];
+    
     if (tag && tag !== "all") {
-      const result = await db
-        .select()
-        .from(articles)
-        .where(and(eq(articles.userId, userId), eq(articles.tag, tag)))
-        .orderBy(desc(articles.savedAt));
-      return result;
-    } else {
-      const result = await db
-        .select()
-        .from(articles)
-        .where(eq(articles.userId, userId))
-        .orderBy(desc(articles.savedAt));
-      return result;
+      conditions.push(eq(notes.tag, tag));
     }
+    
+    const result = await db
+      .select()
+      .from(notes)
+      .where(and(...conditions))
+      .orderBy(desc(notes.createdAt)); // Use createdAt instead of savedAt
+    
+    // Map Note fields to Article format for compatibility
+    return result.map(note => ({
+      ...note,
+      savedAt: note.createdAt // Map createdAt to savedAt for backward compatibility
+    })) as Article[];
   }
 
   async getArticleById(id: string): Promise<Article | undefined> {
-    const result = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
-    return result[0];
+    const result = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
+    if (!result[0]) return undefined;
+    
+    // Map Note to Article format for backward compatibility
+    return {
+      ...result[0],
+      savedAt: result[0].createdAt
+    } as Article;
   }
 
   async createArticle(article: InsertArticle & { userId: string }): Promise<Article> {
-    const result = await db.insert(articles).values(article).returning();
-    return result[0];
+    // Create via notes table but return Article format
+    const result = await db.insert(notes).values({
+      ...article,
+      state: 'saved' // Articles created via old API go to saved state
+    }).returning();
+    
+    return {
+      ...result[0],
+      savedAt: result[0].createdAt
+    } as Article;
   }
 
   async deleteArticle(id: string, userId: string): Promise<boolean> {
-    // First check if the article exists and belongs to the user
-    const existingArticle = await db
-      .select()
-      .from(articles)
-      .where(and(eq(articles.id, id), eq(articles.userId, userId)))
-      .limit(1);
-    
-    if (existingArticle.length === 0) {
-      return false; // Article doesn't exist or doesn't belong to user
-    }
-    
-    // Delete the article
-    await db.delete(articles).where(and(eq(articles.id, id), eq(articles.userId, userId)));
-    return true;
+    // Route to notes table for unified storage
+    return this.deleteNote(id, userId);
   }
 
   async updateArticleTag(id: string, userId: string, tag: string): Promise<Article | undefined> {
-    const result = await db
-      .update(articles)
-      .set({ tag })
-      .where(and(eq(articles.id, id), eq(articles.userId, userId)))
-      .returning();
-    return result[0];
+    // Route to notes table and return Article format
+    const note = await this.updateNoteTag(id, userId, tag);
+    if (!note) return undefined;
+    
+    return {
+      ...note,
+      savedAt: note.createdAt
+    } as Article;
   }
 
   // New Note operations (unified concept)

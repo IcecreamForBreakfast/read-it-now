@@ -9,7 +9,7 @@ import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { PasswordChange } from "@/components/password-change";
 import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Plus, LogOut, HelpCircle, Loader2 } from "lucide-react";
+import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Article } from "@shared/schema";
 
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeView, setActiveView] = useState<"inbox" | "reference">("inbox");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveUrl, setSaveUrl] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
@@ -38,6 +39,15 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Also fetch notes with state filtering for reference view
+  const {
+    data: notes = [],
+    isLoading: notesLoading,
+  } = useQuery({
+    queryKey: ["/api/notes", { state: activeView === "reference" ? "saved" : "inbox" }],
+    enabled: !!user && activeView === "reference",
+  });
+
   const { data: tags = [] } = useQuery({
     queryKey: ["/api/tags"],
     enabled: !!user,
@@ -50,10 +60,11 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
         title: "Article saved",
-        description: "Article has been added to your collection",
+        description: "Article has been added to your inbox",
       });
       setSaveUrl("");
       setShowSaveModal(false);
@@ -88,6 +99,7 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
         title: "Article deleted",
@@ -137,7 +149,20 @@ export default function Dashboard() {
     }
   };
 
-  const filteredArticles = (articles as Article[]).filter((article: Article) => {
+  // Get the appropriate data source based on active view
+  const currentData = activeView === "inbox" 
+    ? (articles as Article[])
+    : (notes as Article[]);
+
+  const filteredArticles = currentData.filter((article: Article) => {
+    // Filter by state based on view
+    const stateMatch = activeView === "inbox" 
+      ? (article.state === "inbox" || !article.state) // Default to inbox if no state
+      : article.state === "saved";
+    
+    if (!stateMatch) return false;
+
+    // Then filter by tag
     if (activeFilter === "all") return true;
     return article.tag === activeFilter;
   });
@@ -167,7 +192,30 @@ export default function Dashboard() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Bookmark className="text-white text-sm" />
               </div>
-              <h1 className="text-xl font-semibold text-slate-800">Read It Later</h1>
+              <h1 className="text-xl font-semibold text-slate-800">
+                {activeView === "inbox" ? "Inbox" : "Reference"}
+              </h1>
+              
+              {/* View Toggle */}
+              <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                <Button
+                  variant={activeView === "inbox" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveView("inbox")}
+                  className="text-xs px-3 py-1 h-7"
+                >
+                  Inbox
+                </Button>
+                <Button
+                  variant={activeView === "reference" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveView("reference")}
+                  className="text-xs px-3 py-1 h-7"
+                >
+                  <Archive className="h-3 w-3 mr-1" />
+                  Reference
+                </Button>
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -198,7 +246,9 @@ export default function Dashboard() {
         {/* Filters Section */}
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-3 mb-6">
-            <h2 className="text-lg font-semibold text-slate-800">Your Articles</h2>
+            <h2 className="text-lg font-semibold text-slate-800">
+              {activeView === "inbox" ? "Your Articles" : "Reference Collection"}
+            </h2>
             <div className="flex-1"></div>
             <Button
               onClick={() => setShowSaveModal(true)}
@@ -231,7 +281,7 @@ export default function Dashboard() {
         </div>
 
         {/* Articles Grid */}
-        {articlesLoading ? (
+        {(articlesLoading || (activeView === "reference" && notesLoading)) ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -246,9 +296,11 @@ export default function Dashboard() {
             </div>
             <h3 className="text-lg font-semibold text-slate-800 mb-2">No articles found</h3>
             <p className="text-slate-600 mb-6">
-              {activeFilter === "all" 
-                ? "Save some articles to get started."
-                : "No articles found with this tag."}
+              {activeView === "reference"
+                ? "No saved references yet. Use the bookmark button on inbox items to save them here."
+                : activeFilter === "all" 
+                  ? "Save some articles to get started."
+                  : "No articles found with this tag."}
             </p>
             <Button
               onClick={() => setShowInstructions(true)}
@@ -264,6 +316,11 @@ export default function Dashboard() {
                 key={article.id}
                 article={article}
                 onDelete={handleDeleteArticle}
+                onSaveForReference={(id) => {
+                  // Optimistically update the view
+                  queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+                }}
               />
             ))}
           </div>

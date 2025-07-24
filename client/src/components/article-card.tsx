@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, Trash2, Edit3, Check, X } from "lucide-react";
+import { Bookmark, Trash2, Edit3, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,9 +12,10 @@ import type { Article } from "@shared/schema";
 interface ArticleCardProps {
   article: Article;
   onDelete: (id: string) => void;
+  onSaveForReference?: (id: string) => void;
 }
 
-export function ArticleCard({ article, onDelete }: ArticleCardProps) {
+export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCardProps) {
   const [, setLocation] = useLocation();
   const [isEditingTag, setIsEditingTag] = useState(false);
   const [selectedTag, setSelectedTag] = useState(article.tag);
@@ -39,6 +40,31 @@ export function ArticleCard({ article, onDelete }: ArticleCardProps) {
     onError: (error) => {
       toast({
         title: "Failed to update tag",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveForReferenceMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("PATCH", `/api/notes/${article.id}/state`, { state: "saved" });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      toast({
+        title: "Saved for reference",
+        description: "Article has been saved to your reference collection",
+      });
+      if (onSaveForReference) {
+        onSaveForReference(article.id);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to save for reference",
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
@@ -74,6 +100,11 @@ export function ArticleCard({ article, onDelete }: ArticleCardProps) {
     e.stopPropagation();
     setSelectedTag(article.tag);
     setIsEditingTag(false);
+  };
+
+  const handleSaveForReference = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    saveForReferenceMutation.mutate();
   };
 
   const getTagColor = (tag: string) => {
@@ -152,6 +183,19 @@ export function ArticleCard({ article, onDelete }: ArticleCardProps) {
             )}
           </div>
           <div className="flex items-center space-x-2">
+            {/* Only show save button for inbox items */}
+            {article.state === 'inbox' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSaveForReference}
+                disabled={saveForReferenceMutation.isPending}
+                className="text-slate-400 hover:text-blue-600 transition-colors"
+                title="Save for reference"
+              >
+                <Bookmark className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

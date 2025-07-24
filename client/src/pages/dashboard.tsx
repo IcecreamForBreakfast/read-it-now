@@ -137,12 +137,12 @@ export default function Dashboard() {
     }
   };
 
-  const filteredArticles = articles.filter((article: Article) => {
+  const filteredArticles = (articles as Article[]).filter((article: Article) => {
     if (activeFilter === "all") return true;
     return article.tag === activeFilter;
   });
 
-  const uniqueTags = ["all", ...new Set(tags)];
+  const uniqueTags = ["all", ...Array.from(new Set(tags as string[]))];
 
   const getTagColor = (tag: string) => {
     if (tag === "all") return "bg-primary text-white";
@@ -206,13 +206,6 @@ export default function Dashboard() {
             >
               <Plus className="mr-2 h-4 w-4" />
               Save Article
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowInstructions(true)}
-              className="text-primary border-primary hover:bg-primary hover:text-white"
-            >
-              How to Save
             </Button>
           </div>
 

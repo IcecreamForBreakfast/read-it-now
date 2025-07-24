@@ -63,7 +63,7 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
 
   const copyShortcutUrl = async () => {
     const baseUrl = window.location.origin;
-    const token = user?.user?.personalToken;
+    const token = (user as any)?.user?.personalToken;
     if (!token) return;
 
     const shortcutUrl = `${baseUrl}/api/save/${token}`;
@@ -86,80 +86,37 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-slate-800">How to Save Articles</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-slate-800">How to Add Articles</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
           <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">iOS Safari</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">Manual Save (Ready Now)</h3>
             <ol className="text-blue-800 text-sm space-y-1 list-decimal list-inside">
-              <li>Open the article you want to save</li>
-              <li>Tap the Share button</li>
-              <li>Select "Read It Later" from the share menu</li>
-              <li>The article will be saved automatically</li>
+              <li>Click the "+ Save Article" button above</li>
+              <li>Paste any article URL</li>
+              <li>Article will be saved instantly to your collection</li>
             </ol>
-          </div>
-          
-          <div className="bg-green-50 rounded-lg p-4">
-            <h3 className="font-semibold text-green-900 mb-2">Desktop Chrome</h3>
-            <ol className="text-green-800 text-sm space-y-1 list-decimal list-inside">
-              <li>Navigate to the article you want to save</li>
-              <li>Click the "Save to Read Later" bookmarklet</li>
-              <li>The article will be added to your collection</li>
-            </ol>
-          </div>
-          
-          <div className="bg-purple-50 rounded-lg p-4">
-            <h3 className="font-semibold text-purple-900 mb-2">Manual Save</h3>
-            <ol className="text-purple-800 text-sm space-y-1 list-decimal list-inside">
-              <li>Copy the article URL from your browser</li>
-              <li>Go to your Read It Later dashboard</li>
-              <li>Click the "Save Article" button</li>
-              <li>Paste the URL and save</li>
-            </ol>
-          </div>
-          
-          <div className="bg-amber-50 rounded-lg p-4">
-            <h3 className="font-semibold text-amber-900 mb-2">Setup Required</h3>
-            <p className="text-amber-800 text-sm">
-              You'll need to install the iOS shortcut or add the bookmarklet to your browser for automated saving.
-              Setup instructions will be provided via email after registration.
-            </p>
+            <p className="text-blue-700 text-xs mt-2 italic">This works immediately - no setup required!</p>
           </div>
 
           {/* iOS Shortcut Integration */}
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
             <div className="flex items-center space-x-2 mb-3">
-              <Smartphone className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">iOS Shortcut Integration</h3>
+              <Smartphone className="h-5 w-5 text-green-600" />
+              <h3 className="font-semibold text-green-900">iOS Shortcut Setup (Optional)</h3>
             </div>
+            <p className="text-green-800 text-sm mb-3">
+              Save articles directly from Safari by setting up a custom iOS shortcut.
+            </p>
             
-            {user?.user?.personalToken ? (
+            {(user as any)?.user?.personalToken ? (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-sm font-medium text-blue-900">Your Personal Token</Label>
+                  <Label className="text-sm font-medium text-green-900">iOS Shortcut URL (Copy This)</Label>
                   <div className="flex items-center space-x-2 mt-1">
                     <Input
-                      value={user.user.personalToken}
-                      readOnly
-                      className="bg-white text-sm font-mono"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToken(user.user.personalToken)}
-                      className="shrink-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-blue-900">iOS Shortcut URL</Label>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Input
-                      value={`${window.location.origin}/api/save/${user.user.personalToken}`}
+                      value={`${window.location.origin}/api/save/${(user as any)?.user?.personalToken}`}
                       readOnly
                       className="bg-white text-sm font-mono"
                     />
@@ -167,23 +124,33 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
                       variant="outline"
                       size="sm"
                       onClick={copyShortcutUrl}
-                      className="shrink-0"
+                      className="shrink-0 bg-green-600 text-white hover:bg-green-700"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="text-green-700 text-xs mt-1">Use this URL in step 5 of the setup instructions below</p>
                 </div>
 
-                <div className="bg-blue-100 rounded p-3 text-sm text-blue-800">
-                  <p className="font-medium mb-1">Setup Instructions:</p>
+                <div className="bg-green-100 rounded p-3 text-sm text-green-800">
+                  <p className="font-medium mb-2">Complete iOS Shortcut Setup:</p>
                   <ol className="list-decimal list-inside space-y-1 text-xs">
                     <li>Copy the iOS Shortcut URL above</li>
-                    <li>Create a new iOS Shortcut</li>
-                    <li>Add "Get Contents of URL" action</li>
-                    <li>Set URL to the copied URL above</li>
-                    <li>Set Method to POST</li>
-                    <li>Add shortcut to Share Sheet</li>
+                    <li>Open the Shortcuts app on your iPhone</li>
+                    <li>Tap the "+" to create a new shortcut</li>
+                    <li>Tap "Add Action" and search for "Get Contents of URL"</li>
+                    <li>Paste the copied URL in the URL field</li>
+                    <li>Set Method to "POST"</li>
+                    <li>Add another action: "Get Text from Input"</li>
+                    <li>Add "Get URLs from Input" action</li>
+                    <li>Connect the URL output to the "Get Contents of URL" request body</li>
+                    <li>Tap the settings icon and enable "Use with Share Sheet"</li>
+                    <li>Name your shortcut "Read It Later" and save</li>
+                    <li>Test by sharing any webpage from Safari</li>
                   </ol>
+                  <div className="mt-2 p-2 bg-green-200 rounded text-xs">
+                    <strong>Usage:</strong> In Safari, tap Share → Read It Later to save articles instantly!
+                  </div>
                 </div>
 
                 <Collapsible open={showTokenGeneration} onOpenChange={setShowTokenGeneration}>
@@ -218,10 +185,11 @@ export function SaveInstructionsModal({ isOpen, onClose }: SaveInstructionsModal
                 <Button
                   onClick={() => generateTokenMutation.mutate()}
                   disabled={generateTokenMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-green-600 hover:bg-green-700"
                 >
                   {generateTokenMutation.isPending ? "Generating..." : "Generate Personal Token"}
                 </Button>
+                <p className="text-green-700 text-xs mt-2">Required to create your custom iOS shortcut</p>
               </div>
             )}
           </div>

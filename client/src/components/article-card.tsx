@@ -128,7 +128,7 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
             </h3>
             <p className="text-sm text-slate-600 mb-2">{article.domain}</p>
             <p className="text-xs text-slate-500">
-              Saved {formatDistanceToNow(new Date(article.savedAt), { addSuffix: true })}
+              Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
             </p>
           </div>
         </div>

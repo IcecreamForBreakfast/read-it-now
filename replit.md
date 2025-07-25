@@ -56,6 +56,7 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **API Integration**: Connected to existing Notes endpoints for seamless annotation management and state transitions
 - ✅ **Inbox Detail View Fixed**: Migrated reader page to unified Notes API, resolved broken inbox article viewing
 - ✅ **Complete API Migration**: All frontend components now use unified Notes endpoints consistently
+- ✅ **Database Migration Complete**: 26 articles migrated to Notes table - iOS shortcut now works with both environments
 
 ## User Preferences
 

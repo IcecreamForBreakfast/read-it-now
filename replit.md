@@ -54,6 +54,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Reference Detail Page**: Complete reading experience with annotation editing, share/delete, and proper navigation
 - ✅ **Smart Routing**: Saved articles open in detail view, inbox articles continue using standard reader
 - ✅ **API Integration**: Connected to existing Notes endpoints for seamless annotation management and state transitions
+- ✅ **Inbox Detail View Fixed**: Migrated reader page to unified Notes API, resolved broken inbox article viewing
+- ✅ **Complete API Migration**: All frontend components now use unified Notes endpoints consistently
 
 ## User Preferences
 

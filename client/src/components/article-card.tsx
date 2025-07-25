@@ -131,6 +131,30 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
               {article.title}
             </h3>
             <p className="text-sm text-slate-600 mb-2">{article.domain}</p>
+            
+            {/* Enhanced snippet for reference cards with annotation preview */}
+            {article.state === "saved" && article.annotation && (
+              <div className="mb-2">
+                <p className="text-xs text-slate-600 font-medium mb-1">Your Notes:</p>
+                <p className="text-xs text-slate-500 italic line-clamp-2">
+                  {article.annotation.length > 100 
+                    ? `${article.annotation.substring(0, 100)}...` 
+                    : article.annotation
+                  }
+                </p>
+              </div>
+            )}
+            
+            {/* Enhanced content snippet for reference cards */}
+            {article.state === "saved" && article.content && (
+              <p className="text-sm text-slate-600 mb-2 line-clamp-3">
+                {article.content.length > 150 
+                  ? `${article.content.substring(0, 150)}...` 
+                  : article.content
+                }
+              </p>
+            )}
+            
             <p className="text-xs text-slate-500">
               Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
             </p>

@@ -11,7 +11,7 @@ import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
 import { useToast } from "@/hooks/use-toast";
 import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import type { Article } from "@shared/schema";
+import type { Note } from "@shared/schema";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -146,7 +146,7 @@ export default function Dashboard() {
   
 
   // Use notes data (filtered by state on the server side)
-  const filteredNotes = (notes as Article[]).filter((note: Article) => {
+  const filteredNotes = (notes as Note[]).filter((note: Note) => {
     // Server already filters by state, just filter by tag
     if (activeFilter === "all") return true;
     return note.tag === activeFilter;
@@ -296,7 +296,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredNotes.map((note: Article) => (
+            {filteredNotes.map((note: Note) => (
               <ArticleCard
                 key={note.id}
                 article={note}

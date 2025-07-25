@@ -7,10 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Article } from "@shared/schema";
+import type { Note } from "@shared/schema";
 
 interface ArticleCardProps {
-  article: Article;
+  article: Note;
   onDelete: (id: string) => void;
   onSaveForReference?: (id: string) => void;
 }
@@ -28,7 +28,6 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auto-tag/analytics"] });
@@ -53,7 +52,6 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       toast({
         title: "Saved for reference",

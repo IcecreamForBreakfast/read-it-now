@@ -44,7 +44,12 @@ export default function Dashboard() {
     data: notes = [],
     isLoading: notesLoading,
   } = useQuery({
-    queryKey: ["/api/notes", { state: activeView === "reference" ? "saved" : "inbox" }],
+    queryKey: ["/api/notes", "state", activeView === "reference" ? "saved" : "inbox"],
+    queryFn: async () => {
+      const response = await fetch(`/api/notes?state=${activeView === "reference" ? "saved" : "inbox"}`);
+      if (!response.ok) throw new Error('Failed to fetch notes');
+      return response.json();
+    },
     enabled: !!user && activeView === "reference",
   });
 
@@ -150,17 +155,24 @@ export default function Dashboard() {
   };
 
   // Get the appropriate data source based on active view
-  const currentData = activeView === "inbox" 
-    ? (articles as Article[])
-    : (notes as Article[]);
+  const currentData = activeView === "reference" 
+    ? (notes as Article[])
+    : (articles as Article[]);
 
   const filteredArticles = currentData.filter((article: Article) => {
-    // Filter by state based on view
-    const stateMatch = activeView === "inbox" 
-      ? (article.state === "inbox" || !article.state) // Default to inbox if no state
-      : article.state === "saved";
-    
-    if (!stateMatch) return false;
+    // For inbox view, show articles without state or with 'inbox' state
+    if (activeView === "inbox") {
+      // Show articles that don't have a state (legacy articles) or have 'inbox' state
+      const hasNoState = article.state === null || article.state === undefined;
+      const isInboxState = article.state === "inbox";
+      const showInInbox = hasNoState || isInboxState;
+      
+      if (!showInInbox) return false;
+    }
+    // For reference view, only show if it has 'saved' state
+    else if (activeView === "reference") {
+      if (article.state !== "saved") return false;
+    }
 
     // Then filter by tag
     if (activeFilter === "all") return true;

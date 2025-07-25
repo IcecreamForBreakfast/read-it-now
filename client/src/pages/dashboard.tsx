@@ -36,19 +36,11 @@ export default function Dashboard() {
     }
   }, [user, setLocation]);
 
-  const {
-    data: articles = [],
-    isLoading: articlesLoading,
-    error: articlesError,
-  } = useQuery({
-    queryKey: ["/api/articles"],
-    enabled: !!user,
-  });
-
-  // Also fetch notes with state filtering for reference view
+  // Use unified notes API for both inbox and reference views
   const {
     data: notes = [],
     isLoading: notesLoading,
+    error: notesError,
   } = useQuery({
     queryKey: ["/api/notes", "state", activeView === "reference" ? "saved" : "inbox"],
     queryFn: async () => {
@@ -56,7 +48,7 @@ export default function Dashboard() {
       if (!response.ok) throw new Error('Failed to fetch notes');
       return response.json();
     },
-    enabled: !!user && activeView === "reference",
+    enabled: !!user,
   });
 
   const { data: tags = [] } = useQuery({
@@ -66,16 +58,15 @@ export default function Dashboard() {
 
   const saveArticleMutation = useMutation({
     mutationFn: async (url: string) => {
-      const response = await apiRequest("POST", "/api/articles", { url });
+      const response = await apiRequest("POST", "/api/notes", { url, state: "saved" });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
         title: "Article saved",
-        description: "Article has been added to your inbox",
+        description: "Article has been added to your reference collection",
       });
       setSaveUrl("");
       setShowSaveModal(false);
@@ -89,53 +80,51 @@ export default function Dashboard() {
     },
   });
 
-  const deleteArticleMutation = useMutation({
+  const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/articles/${id}`);
+      await apiRequest("DELETE", `/api/notes/${id}`);
     },
     onMutate: async (id: string) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["/api/articles"] });
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/notes"] });
       
       // Snapshot the previous value
-      const previousArticles = queryClient.getQueryData(["/api/articles"]);
+      const previousNotes = queryClient.getQueryData(["/api/notes", "state", activeView === "reference" ? "saved" : "inbox"]);
       
       // Optimistically update to the new value
-      queryClient.setQueryData(["/api/articles"], (old: any) => {
-        return old?.filter((article: any) => article.id !== id) || [];
+      queryClient.setQueryData(["/api/notes", "state", activeView === "reference" ? "saved" : "inbox"], (old: any) => {
+        return old?.filter((note: any) => note.id !== id) || [];
       });
       
       // Return a context object with the snapshotted value
-      return { previousArticles };
+      return { previousNotes };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
-        title: "Article deleted",
-        description: "Article has been removed from your collection",
+        title: "Note deleted",
+        description: "Note has been removed from your collection",
       });
     },
     onError: (error, id, context) => {
-      // Check if it's a 404 error (article already deleted)
+      // Check if it's a 404 error (note already deleted)
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       const is404 = errorMessage.includes("404") || errorMessage.includes("not found");
       
       if (is404) {
-        // Article was already deleted, just show success message
+        // Note was already deleted, just show success message
         toast({
-          title: "Article deleted",
-          description: "Article has been removed from your collection",
+          title: "Note deleted",
+          description: "Note has been removed from your collection",
         });
-        // Don't roll back the optimistic update since the article is actually gone
       } else {
         // If the mutation fails for other reasons, use the context to roll back
-        if (context?.previousArticles) {
-          queryClient.setQueryData(["/api/articles"], context.previousArticles);
+        if (context?.previousNotes) {
+          queryClient.setQueryData(["/api/notes", "state", activeView === "reference" ? "saved" : "inbox"], context.previousNotes);
         }
         toast({
-          title: "Failed to delete article",
+          title: "Failed to delete note",
           description: errorMessage,
           variant: "destructive",
         });
@@ -143,7 +132,7 @@ export default function Dashboard() {
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
     },
   });
 
@@ -154,35 +143,13 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteArticle = (id: string) => {
-    if (confirm("Are you sure you want to delete this article?")) {
-      deleteArticleMutation.mutate(id);
-    }
-  };
+  
 
-  // Get the appropriate data source based on active view
-  const currentData = activeView === "reference" 
-    ? (notes as Article[])
-    : (articles as Article[]);
-
-  const filteredArticles = currentData.filter((article: Article) => {
-    // For inbox view, show articles without state or with 'inbox' state
-    if (activeView === "inbox") {
-      // Show articles that don't have a state (legacy articles) or have 'inbox' state
-      const hasNoState = article.state === null || article.state === undefined;
-      const isInboxState = article.state === "inbox";
-      const showInInbox = hasNoState || isInboxState;
-      
-      if (!showInInbox) return false;
-    }
-    // For reference view, only show if it has 'saved' state
-    else if (activeView === "reference") {
-      if (article.state !== "saved") return false;
-    }
-
-    // Then filter by tag
+  // Use notes data (filtered by state on the server side)
+  const filteredNotes = (notes as Article[]).filter((note: Article) => {
+    // Server already filters by state, just filter by tag
     if (activeFilter === "all") return true;
-    return article.tag === activeFilter;
+    return note.tag === activeFilter;
   });
 
   const uniqueTags = ["all", ...Array.from(new Set(tags as string[]))];
@@ -298,16 +265,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Articles Grid */}
-        {(articlesLoading || (activeView === "reference" && notesLoading)) ? (
+        {/* Notes Grid */}
+        {notesLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : articlesError ? (
+        ) : notesError ? (
           <div className="text-center py-12">
-            <p className="text-red-600">Failed to load articles</p>
+            <p className="text-red-600">Failed to load notes</p>
           </div>
-        ) : filteredArticles.length === 0 ? (
+        ) : filteredNotes.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bookmark className="text-slate-400 text-xl" />
@@ -329,14 +296,13 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredArticles.map((article: Article) => (
+            {filteredNotes.map((note: Article) => (
               <ArticleCard
-                key={article.id}
-                article={article}
-                onDelete={handleDeleteArticle}
+                key={note.id}
+                article={note}
+                onDelete={(id) => deleteNoteMutation.mutate(id)}
                 onSaveForReference={(id) => {
                   // Optimistically update the view
-                  queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
                 }}
               />

@@ -30,7 +30,7 @@ export interface IStorage {
   updateNoteState(id: string, userId: string, state: string): Promise<Note | undefined>;
   updateNoteAnnotation(id: string, userId: string, annotation: string): Promise<Note | undefined>;
   
-  // Article operations (backward compatibility)
+  // Article operations (backward compatibility - DEPRECATED, use Note operations)
   getArticlesByUserId(userId: string, tag?: string): Promise<Article[]>;
   getArticleById(id: string): Promise<Article | undefined>;
   createArticle(article: InsertArticle & { userId: string }): Promise<Article>;

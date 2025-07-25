@@ -213,8 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-tag analytics endpoint
   app.get("/api/auto-tag/analytics", requireAuth, async (req, res) => {
     try {
-      const articles = await storage.getArticlesByUserId(req.session.userId!);
-      const analytics = autoTagger.generateAnalytics(articles);
+      const notes = await storage.getNotesByUserId(req.session.userId!);
+      const analytics = autoTagger.generateAnalytics(notes);
       res.json(analytics);
     } catch (error) {
       console.error('Error generating analytics:', error);
@@ -247,33 +247,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Batch retag existing articles endpoint
+  // Batch retag existing notes endpoint
   app.post("/api/auto-tag/retag-existing", requireAuth, async (req, res) => {
     try {
-      const articles = await storage.getArticlesByUserId(req.session.userId!);
-      const untaggedArticles = articles.filter(article => 
-        article.tag === 'untagged' || !article.tag
+      const notes = await storage.getNotesByUserId(req.session.userId!);
+      const untaggedNotes = notes.filter(note => 
+        note.tag === 'untagged' || !note.tag
       );
 
       let updated = 0;
       const results = [];
 
-      for (const article of untaggedArticles) {
-        const taggingResult = autoTagger.tagArticle(article);
+      for (const note of untaggedNotes) {
+        const taggingResult = autoTagger.tagArticle(note);
         
         if (taggingResult.tag !== 'untagged') {
-          const updatedArticle = await storage.updateArticleTag(
-            article.id, 
+          const updatedNote = await storage.updateNoteTag(
+            note.id, 
             req.session.userId!, 
             taggingResult.tag
           );
           
-          if (updatedArticle) {
+          if (updatedNote) {
             updated++;
             results.push({
-              id: article.id,
-              title: article.title,
-              oldTag: article.tag,
+              id: note.id,
+              title: note.title,
+              oldTag: note.tag,
               newTag: taggingResult.tag,
               confidence: taggingResult.confidence,
               reasons: taggingResult.reasons
@@ -283,14 +283,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({
-        message: `Successfully retagged ${updated} articles`,
-        totalProcessed: untaggedArticles.length,
+        message: `Successfully retagged ${updated} notes`,
+        totalProcessed: untaggedNotes.length,
         updated,
         results
       });
     } catch (error) {
-      console.error('Error retagging articles:', error);
-      res.status(500).json({ message: "Failed to retag articles" });
+      console.error('Error retagging notes:', error);
+      res.status(500).json({ message: "Failed to retag notes" });
     }
   });
 
@@ -386,112 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Article routes
-  app.get("/api/articles", requireAuth, async (req, res) => {
-    try {
-      const tag = req.query.tag as string;
-      console.log('Fetching articles for user:', req.session.userId!, 'tag:', tag);
-      const articles = await storage.getArticlesByUserId(req.session.userId!, tag);
-      console.log('Articles fetched:', articles.length);
-      res.json(articles);
-    } catch (error) {
-      console.error('Error in GET /api/articles:', error);
-      res.status(500).json({ message: "Failed to fetch articles" });
-    }
-  });
-
-  app.get("/api/articles/:id", requireAuth, async (req, res) => {
-    try {
-      const article = await storage.getArticleById(req.params.id);
-      if (!article || article.userId !== req.session.userId!) {
-        return res.status(404).json({ message: "Article not found" });
-      }
-      res.json(article);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch article" });
-    }
-  });
-
-  app.post("/api/articles", requireAuth, async (req, res) => {
-    try {
-      const { url } = saveArticleSchema.parse(req.body);
-      
-      // Extract article content and metadata
-      const { title, content } = await extractArticleContent(url);
-      const domain = extractDomain(url);
-      
-      // Auto-tag the article
-      const mockArticle = {
-        id: '',
-        userId: req.session.userId!,
-        url,
-        title,
-        domain,
-        content,
-        annotation: null,
-        tag: 'untagged',
-        state: 'saved',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const taggingResult = autoTagger.tagArticle(mockArticle);
-
-      // Create article via unified Notes system (manual saves go to "saved" state)
-      const article = await storage.createNote({
-        userId: req.session.userId!,
-        url,
-        title,
-        domain,
-        content,
-        tag: taggingResult.tag,
-        state: 'saved' // Manual article saves go directly to saved state
-      });
-      
-      res.json(article);
-    } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to save article" });
-    }
-  });
-
-  app.delete("/api/articles/:id", requireAuth, async (req, res) => {
-    try {
-      const success = await storage.deleteArticle(req.params.id, req.session.userId!);
-      if (!success) {
-        return res.status(404).json({ message: "Article not found" });
-      }
-      res.json({ message: "Article deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete article" });
-    }
-  });
-
-  // Update article tag endpoint
-  app.patch("/api/articles/:id/tag", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { tag } = req.body;
-      
-      if (!tag || typeof tag !== 'string') {
-        return res.status(400).json({ message: "Tag is required" });
-      }
-      
-      const validTags = ['work', 'personal', 'uncertain', 'untagged'];
-      if (!validTags.includes(tag)) {
-        return res.status(400).json({ message: "Invalid tag value" });
-      }
-      
-      const result = await storage.updateArticleTag(id, req.session.userId!, tag);
-      
-      if (result) {
-        res.json({ message: "Tag updated successfully", article: result });
-      } else {
-        res.status(404).json({ message: "Article not found" });
-      }
-    } catch (error) {
-      console.error('Error updating article tag:', error);
-      res.status(500).json({ message: "Failed to update article tag" });
-    }
-  });
+  // Legacy article endpoints removed - all functionality moved to unified /api/notes endpoints
 
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {

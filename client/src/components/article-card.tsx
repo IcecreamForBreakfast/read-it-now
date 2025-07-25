@@ -73,7 +73,12 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
 
   const handleCardClick = () => {
     if (!isEditingTag) {
-      setLocation(`/reader/${article.id}`);
+      // Navigate to appropriate view based on article state
+      if (article.state === "saved") {
+        setLocation(`/reference/${article.id}`);
+      } else {
+        setLocation(`/reader/${article.id}`);
+      }
     }
   };
 

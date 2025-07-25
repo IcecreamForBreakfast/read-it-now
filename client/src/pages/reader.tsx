@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Share, Trash2, Loader2, ExternalLink } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
-import type { Article } from "@shared/schema";
+import type { Note } from "@shared/schema";
 
 export default function ReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,16 +28,21 @@ export default function ReaderPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/articles", id],
+    queryKey: ["/api/notes", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/notes/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch note');
+      return response.json();
+    },
     enabled: !!user && !!id,
   });
 
   const deleteArticleMutation = useMutation({
     mutationFn: async (articleId: string) => {
-      await apiRequest("DELETE", `/api/articles/${articleId}`);
+      await apiRequest("DELETE", `/api/notes/${articleId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
         title: "Article deleted",
@@ -157,7 +162,7 @@ export default function ReaderPage() {
                 {article.tag}
               </span>
               <div className="text-sm text-slate-500">
-                Saved {formatDistanceToNow(new Date(article.savedAt), { addSuffix: true })}
+                Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
               </div>
             </div>
             <h1 className="text-3xl font-bold text-slate-800 mb-4">{article.title}</h1>
@@ -183,7 +188,7 @@ export default function ReaderPage() {
             <div className="prose prose-slate prose-lg max-w-none">
               {article.content ? (
                 <div className="text-slate-700 leading-relaxed">
-                  {article.content.split('\n\n').map((paragraph, index) => (
+                  {article.content.split('\n\n').map((paragraph: string, index: number) => (
                     <p key={index} className="mb-4 text-base leading-7">
                       {paragraph.trim()}
                     </p>

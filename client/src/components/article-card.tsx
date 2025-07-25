@@ -24,11 +24,12 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
 
   const updateTagMutation = useMutation({
     mutationFn: async (newTag: string) => {
-      const response = await apiRequest("PATCH", `/api/articles/${article.id}/tag`, { tag: newTag });
+      const response = await apiRequest("PATCH", `/api/notes/${article.id}/tag`, { tag: newTag });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auto-tag/analytics"] });
       setIsEditingTag(false);

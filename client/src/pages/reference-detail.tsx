@@ -164,7 +164,7 @@ export default function ReferenceDetail() {
           <div className="flex items-center justify-between h-16">
             <Button
               variant="ghost"
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => setLocation("/dashboard?view=reference")}
               className="text-slate-600 hover:text-slate-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

@@ -17,7 +17,13 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeView, setActiveView] = useState<"inbox" | "reference">("inbox");
+  
+  // Check URL for view parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const viewFromUrl = urlParams.get('view');
+  const [activeView, setActiveView] = useState<"inbox" | "reference">(
+    (viewFromUrl === "reference") ? "reference" : "inbox"
+  );
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveUrl, setSaveUrl] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);

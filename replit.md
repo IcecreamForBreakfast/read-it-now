@@ -57,6 +57,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Inbox Detail View Fixed**: Migrated reader page to unified Notes API, resolved broken inbox article viewing
 - ✅ **Complete API Migration**: All frontend components now use unified Notes endpoints consistently
 - ✅ **Database Migration Complete**: 26 articles migrated to Notes table - iOS shortcut now works with both environments
+- ✅ **Production Deployment Success**: Feature branch updated with Phase 2 enhancements - annotation previews now live in production
+- ✅ **Git Repository Synchronized**: Latest unified Notes API code pushed to GitHub - all environments aligned
 
 ## User Preferences
 

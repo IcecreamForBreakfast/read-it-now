@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth-provider";
 import { useLocation } from "wouter";
@@ -9,7 +9,7 @@ import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { PasswordChange } from "@/components/password-change";
 import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive } from "lucide-react";
+import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive, Search } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Note } from "@shared/schema";
 
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Check URL for view parameter
   const urlParams = new URLSearchParams(window.location.search);
@@ -55,6 +56,59 @@ export default function Dashboard() {
     queryKey: ["/api/tags"],
     enabled: !!user,
   });
+
+  // Fuzzy search function
+  const fuzzySearch = (query: string, text: string): boolean => {
+    if (!query) return true;
+    
+    const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+    const searchableText = text.toLowerCase();
+    
+    return searchTerms.every(term => {
+      // Exact match
+      if (searchableText.includes(term)) return true;
+      
+      // Fuzzy match - allow some character differences
+      for (let i = 0; i <= searchableText.length - term.length; i++) {
+        const substring = searchableText.substring(i, i + term.length);
+        let differences = 0;
+        
+        for (let j = 0; j < term.length; j++) {
+          if (term[j] !== substring[j]) differences++;
+        }
+        
+        // Allow 1 character difference for terms longer than 3 characters
+        if (differences <= (term.length > 3 ? 1 : 0)) return true;
+      }
+      
+      return false;
+    });
+  };
+
+  // Filter and search notes
+  const filteredNotes = useMemo(() => {
+    let filtered = notes;
+
+    // Apply tag filter
+    if (activeFilter !== "all") {
+      filtered = filtered.filter((note: Note) => note.tag === activeFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((note: Note) => {
+        const searchableContent = [
+          note.title || '',
+          note.content || '',
+          note.annotation || ''
+        ].join(' ');
+        
+        return fuzzySearch(searchQuery, searchableContent);
+      });
+    }
+
+    return filtered;
+  }, [notes, activeFilter, searchQuery]);
 
   const saveArticleMutation = useMutation({
     mutationFn: async (url: string) => {
@@ -143,14 +197,7 @@ export default function Dashboard() {
     }
   };
 
-  
 
-  // Use notes data (filtered by state on the server side)
-  const filteredNotes = (notes as Note[]).filter((note: Note) => {
-    // Server already filters by state, just filter by tag
-    if (activeFilter === "all") return true;
-    return note.tag === activeFilter;
-  });
 
   const uniqueTags = ["all", ...Array.from(new Set(tags as string[]))];
 
@@ -169,41 +216,41 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+      {/* Compact Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Bookmark className="text-white text-sm" />
-              </div>
-              <h1 className="text-xl font-semibold text-slate-800">
-                {activeView === "inbox" ? "Inbox" : "Reference"}
-              </h1>
-              
-              {/* View Toggle */}
-              <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                <Button
-                  variant={activeView === "inbox" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveView("inbox")}
-                  className="text-xs px-3 py-1 h-7"
-                >
-                  Inbox
-                </Button>
-                <Button
-                  variant={activeView === "reference" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveView("reference")}
-                  className="text-xs px-3 py-1 h-7"
-                >
-                  <Archive className="h-3 w-3 mr-1" />
-                  Reference
-                </Button>
-              </div>
+          
+          {/* Row 1: Toggle + Action Buttons */}
+          <div className="flex items-center justify-between py-3">
+            {/* Large View Toggle (serves as both control and label) */}
+            <div className="flex items-center bg-slate-100 rounded-xl p-1">
+              <Button
+                variant={activeView === "inbox" ? "default" : "ghost"}
+                size="lg"
+                onClick={() => setActiveView("inbox")}
+                className="px-6 py-2 h-10 text-base font-medium"
+              >
+                Inbox
+              </Button>
+              <Button
+                variant={activeView === "reference" ? "default" : "ghost"}
+                size="lg"
+                onClick={() => setActiveView("reference")}
+                className="px-6 py-2 h-10 text-base font-medium"
+              >
+                Reference
+              </Button>
             </div>
 
-            <div className="flex items-center space-x-4">
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setShowSaveModal(true)}
+                size="sm"
+                className="bg-primary text-white hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -222,48 +269,53 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+
+          {/* Row 2: Search Bar */}
+          <div className="pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search articles and notes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full bg-slate-50 border-slate-200 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Row 3: Condensed Tag Pills */}
+          <div className="pb-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {uniqueTags.map((tag) => (
+                <Button
+                  key={tag}
+                  variant={activeFilter === tag ? "default" : "secondary"}
+                  size="sm"
+                  onClick={() => setActiveFilter(tag)}
+                  className={`
+                    flex-shrink-0 px-3 py-1 h-7 rounded-full text-xs font-medium transition-colors
+                    ${activeFilter === tag 
+                      ? "bg-primary text-white" 
+                      : getTagColor(tag) + " hover:bg-slate-300"
+                    }
+                  `}
+                >
+                  {tag === "all" ? "All Articles" : tag}
+                  {tag !== "all" && (
+                    <span className="ml-1 opacity-70">
+                      {notes.filter((note: Note) => note.tag === tag).length}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Filters Section */}
-        <div className="mb-8">
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <h2 className="text-lg font-semibold text-slate-800">
-              {activeView === "inbox" ? "Your Articles" : "Reference Collection"}
-            </h2>
-            <div className="flex-1"></div>
-            <Button
-              onClick={() => setShowSaveModal(true)}
-              className="bg-primary text-white hover:bg-blue-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Save Article
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {uniqueTags.map((tag) => (
-              <Button
-                key={tag}
-                variant={activeFilter === tag ? "default" : "secondary"}
-                size="sm"
-                onClick={() => setActiveFilter(tag)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-colors
-                  ${activeFilter === tag 
-                    ? "bg-primary text-white hover:bg-blue-700" 
-                    : getTagColor(tag) + " hover:bg-slate-300"
-                  }
-                `}
-              >
-                {tag === "all" ? "All Articles" : tag}
-              </Button>
-            ))}
-          </div>
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Notes Grid */}
         {notesLoading ? (
@@ -279,32 +331,34 @@ export default function Dashboard() {
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bookmark className="text-slate-400 text-xl" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">No articles found</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">
+              {searchQuery ? "No articles match your search" : "No articles found"}
+            </h3>
             <p className="text-slate-600 mb-6">
-              {activeView === "reference"
-                ? "No saved references yet. Use the bookmark button on inbox items to save them here."
-                : activeFilter === "all" 
-                  ? "Save some articles to get started."
-                  : "No articles found with this tag."}
+              {searchQuery 
+                ? `Try searching for something else or clear your search term`
+                : activeView === "reference"
+                  ? "Save some articles to see them here"
+                  : "No articles in your inbox yet"
+              }
             </p>
-            <Button
-              onClick={() => setShowInstructions(true)}
-              className="bg-primary text-white hover:bg-blue-700"
-            >
-              Learn How to Save Articles
-            </Button>
+            {!searchQuery && (
+              <Button
+                onClick={() => setShowSaveModal(true)}
+                className="bg-primary text-white hover:bg-blue-700"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Save Your First Article
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map((note: Note) => (
               <ArticleCard
                 key={note.id}
                 article={note}
                 onDelete={(id) => deleteNoteMutation.mutate(id)}
-                onSaveForReference={(id) => {
-                  // Optimistically update the view
-                  queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-                }}
               />
             ))}
           </div>

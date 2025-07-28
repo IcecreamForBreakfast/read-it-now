@@ -125,48 +125,47 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
       className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer group"
     >
       <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2 group-hover:text-primary transition-colors line-clamp-2">
-              {article.title}
-            </h3>
-            <p className="text-sm text-slate-600 mb-2">{article.domain}</p>
-            
-            {/* Enhanced snippet for reference cards with annotation preview */}
-            {article.state === "saved" && article.annotation && (
-              <div className="mb-2">
-                <p className="text-xs text-slate-600 font-medium mb-1">Your Notes:</p>
-                <p className="text-xs text-slate-500 italic line-clamp-2">
-                  {article.annotation.length > 100 
-                    ? `${article.annotation.substring(0, 100)}...` 
-                    : article.annotation
-                  }
-                </p>
-              </div>
-            )}
-            
-            {/* Enhanced content snippet for reference cards */}
-            {article.state === "saved" && article.content && (
-              <p className="text-sm text-slate-600 mb-2 line-clamp-3">
-                {article.content.length > 150 
-                  ? `${article.content.substring(0, 150)}...` 
-                  : article.content
-                }
-              </p>
-            )}
-            
-            <p className="text-xs text-slate-500">
-              Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
-            </p>
-          </div>
-        </div>
+        {/* Title */}
+        <h3 className="text-lg font-semibold text-slate-800 mb-3 group-hover:text-primary transition-colors line-clamp-2">
+          {article.title}
+        </h3>
+        
+        {/* Annotation (larger, no label) */}
+        {article.state === "saved" && article.annotation && (
+          <p className="text-sm text-slate-500 italic mb-3 line-clamp-2">
+            {article.annotation.length > 100 
+              ? `${article.annotation.substring(0, 100)}...` 
+              : article.annotation
+            }
+          </p>
+        )}
+        
+        {/* Content snippet for reference cards */}
+        {article.state === "saved" && article.content && (
+          <p className="text-sm text-slate-600 mb-4 line-clamp-3">
+            {article.content.length > 150 
+              ? `${article.content.substring(0, 150)}...` 
+              : article.content
+            }
+          </p>
+        )}
+        
+        {/* Footer with metadata */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
 
-        <div className="flex items-center justify-between">
+          {/* Left side: Domain and metadata */}
+          <div className="flex items-center space-x-3 text-xs text-slate-500">
+            <span>{article.domain}</span>
+            <span>•</span>
+            <span>Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}</span>
+          </div>
+          
+          {/* Right side: Tag (tap to edit) and actions */}
           <div className="flex items-center space-x-2">
             {isEditingTag ? (
               <div className="flex items-center space-x-2">
                 <Select value={selectedTag} onValueChange={setSelectedTag}>
-                  <SelectTrigger className="w-32 h-8">
+                  <SelectTrigger className="w-24 h-7 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -181,7 +180,7 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
                   size="sm"
                   onClick={handleTagSave}
                   disabled={updateTagMutation.isPending}
-                  className="text-green-600 hover:text-green-700 p-1"
+                  className="text-green-600 hover:text-green-700 p-1 h-7 w-7"
                 >
                   <Check className="h-3 w-3" />
                 </Button>
@@ -189,49 +188,46 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
                   variant="ghost"
                   size="sm"
                   onClick={handleTagCancel}
-                  className="text-slate-400 hover:text-slate-600 p-1"
+                  className="text-slate-400 hover:text-slate-600 p-1 h-7 w-7"
                 >
                   <X className="h-3 w-3" />
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getTagColor(article.tag)}`}>
-                  {article.tag}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <>
+                <button
                   onClick={handleTagEditClick}
-                  className="text-slate-400 hover:text-slate-600 p-1"
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors hover:bg-opacity-80 ${getTagColor(article.tag)}`}
                 >
-                  <Edit3 className="h-3 w-3" />
-                </Button>
-              </div>
+                  {article.tag}
+                </button>
+                
+                {/* Action buttons */}
+                <div className="flex items-center space-x-1">
+                  {/* Only show save button for inbox items */}
+                  {article.state === 'inbox' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveForReference}
+                      disabled={saveForReferenceMutation.isPending}
+                      className="text-slate-400 hover:text-blue-600 transition-colors h-7 w-7 p-1"
+                      title="Save for reference"
+                    >
+                      <Bookmark className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteClick}
+                    className="text-slate-400 hover:text-red-600 transition-colors h-7 w-7 p-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* Only show save button for inbox items */}
-            {article.state === 'inbox' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSaveForReference}
-                disabled={saveForReferenceMutation.isPending}
-                className="text-slate-400 hover:text-blue-600 transition-colors"
-                title="Save for reference"
-              >
-                <Bookmark className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDeleteClick}
-              className="text-slate-400 hover:text-red-600 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

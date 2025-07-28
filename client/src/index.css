@@ -57,6 +57,16 @@
   }
 }
 
+/* Hide scrollbar for tag pills on mobile */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Custom styles for the read-it-later app */
 .line-clamp-2 {
   display: -webkit-box;

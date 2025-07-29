@@ -42,6 +42,8 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
   annotation: true,
   tag: true,
   state: true,
+}).extend({
+  title: z.string().optional(), // Make title optional for URL-based notes (will be extracted)
 });
 
 // Backward compatibility

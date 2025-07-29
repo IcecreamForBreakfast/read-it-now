@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: '',
           userId: req.session.userId!,
           url: normalizedUrl,
-          title: articleContent.title || noteData.title,
+          title: articleContent.title || noteData.title || 'Untitled Article',
           domain,
           content: articleContent.content,
           tag: 'untagged',
@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const note = await storage.createNote({
           userId: req.session.userId!,
           url: normalizedUrl,
-          title: articleContent.title || noteData.title,
+          title: articleContent.title || noteData.title || 'Untitled Article',
           domain,
           content: articleContent.content,
           annotation: noteData.annotation,

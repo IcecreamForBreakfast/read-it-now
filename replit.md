@@ -62,6 +62,7 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **UI Redesign Complete**: Compact header with large toggle, always-visible search, redesigned cards with footer metadata
 - ✅ **Mobile-First Interface**: Touch-optimized interactions, horizontal scrolling tags, streamlined card hierarchy
 - ✅ **Enhanced Search Integration**: Fuzzy search across title, content, and annotations with real-time filtering
+- ✅ **Context-Aware Manual Saving**: Fixed manual article saving to respect current view - Inbox saves to inbox, Reference saves to reference
 
 ## User Preferences
 

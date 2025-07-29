@@ -112,7 +112,9 @@ export default function Dashboard() {
 
   const saveArticleMutation = useMutation({
     mutationFn: async (url: string) => {
-      const response = await apiRequest("POST", "/api/notes", { url, state: "saved" });
+      // Save to the current view context
+      const targetState = activeView === "reference" ? "saved" : "inbox";
+      const response = await apiRequest("POST", "/api/notes", { url, state: targetState });
       return response.json();
     },
     onSuccess: () => {
@@ -120,7 +122,9 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
       toast({
         title: "Article saved",
-        description: "Article has been added to your reference collection",
+        description: activeView === "reference" 
+          ? "Article has been added to your reference collection"
+          : "Article has been added to your inbox",
       });
       setSaveUrl("");
       setShowSaveModal(false);
@@ -369,7 +373,9 @@ export default function Dashboard() {
       {showSaveModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <h2 className="text-xl font-semibold mb-4">Save Article</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Save to {activeView === "reference" ? "Reference" : "Inbox"}
+            </h2>
             <form onSubmit={handleSaveArticle} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">

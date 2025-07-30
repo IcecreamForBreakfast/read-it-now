@@ -65,6 +65,9 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Context-Aware Manual Saving**: Fixed manual article saving to respect current view - Inbox saves to inbox, Reference saves to reference
 - ✅ **Dense UI Implementation**: Applied compact card design with 50% reduced padding, short timestamps, single-line metadata, and three-dot action menus
 - ✅ **Consistent Dense Styling**: Extended compact layout to all detail views maintaining visual consistency across the app
+- ✅ **Custom Tag Management System**: Database-backed custom tags with CRUD operations through settings modal
+- ✅ **Unified Tag Integration**: Custom tags appear in both tag management modal and article editing dropdowns
+- ✅ **Smart Tag Validation**: Prevents duplicate tag creation and reserved tag name conflicts
 
 ## User Preferences
 

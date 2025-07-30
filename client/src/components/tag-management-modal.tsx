@@ -24,6 +24,17 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
+  // Fetch all tags
+  const { data: allTags } = useQuery({
+    queryKey: ["/api/tags"],
+    queryFn: async (): Promise<string[]> => {
+      const response = await fetch("/api/tags");
+      if (!response.ok) throw new Error("Failed to fetch tags");
+      return response.json();
+    },
+    enabled: isOpen,
+  });
+
   // Fetch tag statistics
   const { data: tagStats, isLoading } = useQuery({
     queryKey: ["/api/tags/stats"],
@@ -141,7 +152,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
     const trimmedName = newTagName.trim().toLowerCase();
     
     // Check if tag already exists
-    const existingTags = tagStats?.map(s => s.tag) || [];
+    const existingTags = allTags || [];
     if (existingTags.includes(trimmedName)) {
       toast({
         title: "Tag already exists",
@@ -208,7 +219,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <span className="ml-2 text-slate-600">Loading tags...</span>
             </div>
-          ) : !tagStats || tagStats.length === 0 ? (
+          ) : !allTags || allTags.length === 0 ? (
             <div className="text-center py-8 text-slate-500">
               <p>No tags found</p>
               <p className="text-sm mt-2">Tags will appear here when you start tagging articles</p>
@@ -261,84 +272,92 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
                 </Button>
               )}
 
-              {tagStats
-                .filter(stat => !['untagged', 'work', 'personal', 'uncertain'].includes(stat.tag)) // Hide default/system tags
-                .sort((a, b) => b.count - a.count) // Sort by usage count
-                .map((stat) => (
-                  <div
-                    key={stat.tag}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
-                  >
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      {editingTag === stat.tag ? (
-                        <div className="flex items-center space-x-2 flex-1">
-                          <Input
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            className="h-7 text-sm flex-1 min-w-0"
-                            placeholder="Tag name"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit();
-                              if (e.key === "Escape") handleCancelEdit();
-                            }}
-                            autoFocus
-                          />
+              {allTags && allTags
+                .filter(tag => !['untagged', 'work', 'personal', 'uncertain'].includes(tag)) // Hide default/system tags  
+                .sort((a, b) => {
+                  // Get counts from tagStats and sort by usage (undefined counts go to end)
+                  const aCount = tagStats?.find(s => s.tag === a)?.count || 0;
+                  const bCount = tagStats?.find(s => s.tag === b)?.count || 0;
+                  return bCount - aCount;
+                })
+                .map((tag) => {
+                  const count = tagStats?.find(s => s.tag === tag)?.count || 0;
+                  return (
+                    <div
+                      key={tag}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {editingTag === tag ? (
+                          <div className="flex items-center space-x-2 flex-1">
+                            <Input
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="h-7 text-sm flex-1 min-w-0"
+                              placeholder="Tag name"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") handleCancelEdit();
+                              }}
+                              autoFocus
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleSaveEdit}
+                              disabled={renameTagMutation.isPending}
+                              className="text-green-600 hover:text-green-700 h-7 w-7 p-0"
+                            >
+                              <Save className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              className="text-slate-400 hover:text-slate-600 h-7 w-7 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}>
+                              {tag}
+                            </span>
+                            <span className="text-sm text-slate-500 flex-1">
+                              {count} article{count !== 1 ? 's' : ''}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {editingTag !== tag && (
+                        <div className="flex items-center space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleSaveEdit}
-                            disabled={renameTagMutation.isPending}
-                            className="text-green-600 hover:text-green-700 h-7 w-7 p-0"
-                          >
-                            <Save className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleCancelEdit}
+                            onClick={() => handleStartEdit(tag)}
                             className="text-slate-400 hover:text-slate-600 h-7 w-7 p-0"
                           >
-                            <X className="h-3 w-3" />
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteTag(tag)}
+                            disabled={deleteTagMutation.isPending}
+                            className="text-slate-400 hover:text-red-600 h-7 w-7 p-0"
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      ) : (
-                        <>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(stat.tag)}`}>
-                            {stat.tag}
-                          </span>
-                          <span className="text-sm text-slate-500 flex-1">
-                            {stat.count} article{stat.count !== 1 ? 's' : ''}
-                          </span>
-                        </>
                       )}
                     </div>
-                    
-                    {editingTag !== stat.tag && (
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleStartEdit(stat.tag)}
-                          className="text-slate-400 hover:text-slate-600 h-7 w-7 p-0"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteTag(stat.tag)}
-                          disabled={deleteTagMutation.isPending}
-                          className="text-slate-400 hover:text-red-600 h-7 w-7 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               
               {/* Show system tags at bottom for reference */}
-              {tagStats.filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag)).length > 0 && (
+              {tagStats && tagStats.filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag)).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-200">
                   <h4 className="text-sm font-medium text-slate-600 mb-2">System Tags (Read-only)</h4>
                   <div className="space-y-2">

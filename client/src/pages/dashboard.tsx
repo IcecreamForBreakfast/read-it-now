@@ -9,7 +9,7 @@ import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { PasswordChange } from "@/components/password-change";
 import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive, Search } from "lucide-react";
+import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive, Search, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Note } from "@shared/schema";
 
@@ -262,6 +262,14 @@ export default function Dashboard() {
                 className="text-slate-600 hover:text-slate-800"
               >
                 <HelpCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {}} // Static for now
+                className="text-slate-600 hover:text-slate-800"
+              >
+                <Settings className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"

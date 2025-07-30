@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { Bookmark, Trash2, Edit3, Check, X } from "lucide-react";
+import { Bookmark, Trash2, Edit3, Check, X, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -119,20 +120,42 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
     return "bg-slate-100 text-slate-800";
   };
 
+  const getShortTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 60) {
+      return diffInMinutes < 1 ? "< 1m" : `${diffInMinutes}m`;
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours}h`;
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays}d`;
+    }
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks}w`;
+  };
+
   return (
     <article
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer group"
+      className="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative"
     >
-      <div className="p-6">
+      <div className="p-3">
         {/* Title */}
-        <h3 className="text-lg font-semibold text-slate-800 mb-3 group-hover:text-primary transition-colors line-clamp-2">
+        <h3 className="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
           {article.title}
         </h3>
         
-        {/* Annotation (larger, no label) */}
+        {/* Annotation (larger, no label) - keep for saved articles */}
         {article.state === "saved" && article.annotation && (
-          <p className="text-sm text-slate-500 italic mb-3 line-clamp-2">
+          <p className="text-sm text-slate-500 italic mb-2 line-clamp-2 leading-tight">
             {article.annotation.length > 100 
               ? `${article.annotation.substring(0, 100)}...` 
               : article.annotation
@@ -142,94 +165,112 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
         
         {/* Content snippet for reference cards */}
         {article.state === "saved" && article.content && (
-          <p className="text-sm text-slate-600 mb-4 line-clamp-3">
-            {article.content.length > 150 
-              ? `${article.content.substring(0, 150)}...` 
+          <p className="text-sm text-slate-600 mb-2 line-clamp-2 leading-tight">
+            {article.content.length > 100 
+              ? `${article.content.substring(0, 100)}...` 
               : article.content
             }
           </p>
         )}
         
-        {/* Footer with metadata */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-
-          {/* Left side: Domain and metadata */}
-          <div className="flex items-center space-x-3 text-xs text-slate-500">
-            <span>{article.domain}</span>
+        {/* Single-line metadata row */}
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+            <span className="truncate">{article.domain}</span>
             <span>•</span>
-            <span>Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}</span>
+            <span className="whitespace-nowrap">{getShortTimeAgo(new Date(article.createdAt))}</span>
           </div>
-          
-          {/* Right side: Tag (tap to edit) and actions */}
-          <div className="flex items-center space-x-2">
-            {isEditingTag ? (
-              <div className="flex items-center space-x-2">
-                <Select value={selectedTag} onValueChange={setSelectedTag}>
-                  <SelectTrigger className="w-24 h-7 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="work">work</SelectItem>
-                    <SelectItem value="personal">personal</SelectItem>
-                    <SelectItem value="uncertain">uncertain</SelectItem>
-                    <SelectItem value="untagged">untagged</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="flex items-center space-x-1.5 ml-2">
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getTagColor(article.tag)}`}>
+              {article.tag}
+            </span>
+            
+            {/* Three-dot menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleTagSave}
-                  disabled={updateTagMutation.isPending}
-                  className="text-green-600 hover:text-green-700 p-1 h-7 w-7"
+                  className="text-slate-400 hover:text-slate-600 h-6 w-6 p-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Check className="h-3 w-3" />
+                  <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleTagCancel}
-                  className="text-slate-400 hover:text-slate-600 p-1 h-7 w-7"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingTag(true);
+                  }}
+                  className="text-sm"
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={handleTagEditClick}
-                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors hover:bg-opacity-80 ${getTagColor(article.tag)}`}
-                >
-                  {article.tag}
-                </button>
-                
-                {/* Action buttons */}
-                <div className="flex items-center space-x-1">
-                  {/* Only show save button for inbox items */}
-                  {article.state === 'inbox' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSaveForReference}
-                      disabled={saveForReferenceMutation.isPending}
-                      className="text-slate-400 hover:text-blue-600 transition-colors h-7 w-7 p-1"
-                      title="Save for reference"
-                    >
-                      <Bookmark className="h-3 w-3" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDeleteClick}
-                    className="text-slate-400 hover:text-red-600 transition-colors h-7 w-7 p-1"
+                  <Edit3 className="h-3 w-3 mr-2" />
+                  Edit tag
+                </DropdownMenuItem>
+                {article.state === 'inbox' && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      saveForReferenceMutation.mutate();
+                    }}
+                    disabled={saveForReferenceMutation.isPending}
+                    className="text-sm"
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </>
-            )}
+                    <Bookmark className="h-3 w-3 mr-2" />
+                    Save for reference
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(article.id);
+                  }}
+                  className="text-sm text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+        
+        {/* Tag editing overlay */}
+        {isEditingTag && (
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-3">
+            <div className="flex items-center space-x-2">
+              <Select value={selectedTag} onValueChange={setSelectedTag}>
+                <SelectTrigger className="w-24 h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="work">work</SelectItem>
+                  <SelectItem value="personal">personal</SelectItem>
+                  <SelectItem value="uncertain">uncertain</SelectItem>
+                  <SelectItem value="untagged">untagged</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTagSave}
+                disabled={updateTagMutation.isPending}
+                className="text-green-600 hover:text-green-700 p-1 h-7 w-7"
+              >
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTagCancel}
+                className="text-slate-400 hover:text-slate-600 p-1 h-7 w-7"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -38,16 +37,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Serve prototype files temporarily
-  app.get('/prototypes/:filename', (req, res) => {
-    const filename = req.params.filename;
-    if (filename.endsWith('.html')) {
-      res.sendFile(path.resolve(filename));
-    } else {
-      res.status(404).send('File not found');
-    }
-  });
-
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

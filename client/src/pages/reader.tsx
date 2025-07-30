@@ -124,9 +124,9 @@ export default function ReaderPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {/* Reader Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-3">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -155,9 +155,9 @@ export default function ReaderPage() {
         </div>
 
         {/* Article Metadata */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+        <Card className="mb-2">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-2">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getTagColor(article.tag)}`}>
                 {article.tag}
               </span>
@@ -165,7 +165,7 @@ export default function ReaderPage() {
                 Saved {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-4">{article.title}</h1>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">{article.title}</h1>
             <div className="flex items-center text-sm text-slate-600">
               <span>{article.domain}</span>
               <span className="mx-2">•</span>
@@ -184,7 +184,7 @@ export default function ReaderPage() {
 
         {/* Article Content */}
         <Card>
-          <CardContent className="p-8">
+          <CardContent className="p-3">
             <div className="prose prose-slate prose-lg max-w-none">
               {article.content ? (
                 <div className="text-slate-700 leading-relaxed">

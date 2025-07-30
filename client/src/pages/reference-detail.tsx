@@ -205,14 +205,14 @@ export default function ReferenceDetail() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {/* Article Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 mb-4 leading-tight">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-2">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2 leading-tight">
             {note.title}
           </h1>
           
-          <div className="flex items-center space-x-4 text-sm text-slate-600 mb-6">
+          <div className="flex items-center space-x-4 text-sm text-slate-600 mb-2">
             {note.domain && (
               <span className="font-medium">{note.domain}</span>
             )}
@@ -226,8 +226,8 @@ export default function ReferenceDetail() {
         </div>
 
         {/* Annotation Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-2">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-semibold text-slate-800">Your Notes</h2>
             {!isEditingAnnotation && (
               <Button
@@ -294,8 +294,8 @@ export default function ReferenceDetail() {
         </div>
 
         {/* Article Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6">Article Content</h2>
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Article Content</h2>
           <div className="prose max-w-none">
             {note.content ? (
               <div 

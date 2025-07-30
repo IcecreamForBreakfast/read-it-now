@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, uuid, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -28,6 +28,18 @@ export const notes = pgTable("notes", {
 // Keep articles table reference for backward compatibility during migration  
 // This allows existing code to work while using the unified notes table
 export const articles = notes;
+
+// Custom tags table for user-created tags
+export const customTags = pgTable("custom_tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tagName: text("tag_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userTagUnique: unique().on(table.userId, table.tagName),
+  };
+});
 
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -84,3 +96,10 @@ export type Article = Note; // Backward compatibility
 export type LoginData = z.infer<typeof loginSchema>;
 export type MagicLinkData = z.infer<typeof magicLinkSchema>;
 export type SaveArticleData = z.infer<typeof saveArticleSchema>;
+
+export const insertCustomTagSchema = createInsertSchema(customTags).pick({
+  tagName: true,
+});
+
+export type CustomTag = typeof customTags.$inferSelect;
+export type InsertCustomTag = z.infer<typeof insertCustomTagSchema>;

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { users, notes, articles, type User, type Note, type Article, type InsertUser, type InsertNote, type InsertArticle } from "@shared/schema";
+import { users, notes, articles, customTags, type User, type Note, type Article, type InsertUser, type InsertNote, type InsertArticle, type CustomTag, type InsertCustomTag } from "@shared/schema";
 import { eq, desc, and, count } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -46,8 +46,6 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // In-memory storage for custom tags per user
-  private customTags: Map<string, Set<string>> = new Map();
   async getUserById(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
@@ -229,28 +227,34 @@ export class DatabaseStorage implements IStorage {
 
   async getTagsByUserId(userId: string): Promise<string[]> {
     // Get tags from notes
-    const result = await db
+    const noteTagsResult = await db
       .selectDistinct({ tag: notes.tag })
       .from(notes)
       .where(eq(notes.userId, userId));
-    const noteTags = result.map(r => r.tag);
+    const noteTags = noteTagsResult.map(r => r.tag);
     
-    // Get custom tags
-    const customTags = Array.from(this.customTags.get(userId) || []);
+    // Get custom tags from database
+    const customTagsResult = await db
+      .select({ tagName: customTags.tagName })
+      .from(customTags)
+      .where(eq(customTags.userId, userId));
+    const customTagNames = customTagsResult.map(r => r.tagName);
     
     // Combine and deduplicate
-    const allTags = [...new Set([...noteTags, ...customTags])];
+    const allTags = Array.from(new Set([...noteTags, ...customTagNames]));
     return allTags;
   }
 
   async createCustomTag(userId: string, tagName: string): Promise<boolean> {
     try {
-      if (!this.customTags.has(userId)) {
-        this.customTags.set(userId, new Set());
-      }
-      this.customTags.get(userId)!.add(tagName);
+      await db.insert(customTags).values({
+        userId,
+        tagName
+      });
       return true;
-    } catch {
+    } catch (error) {
+      // Handle duplicate tag error gracefully
+      console.error('Error creating custom tag:', error);
       return false;
     }
   }
@@ -274,6 +278,12 @@ export class DatabaseStorage implements IStorage {
         .update(notes)
         .set({ tag: "untagged", updatedAt: new Date() })
         .where(and(eq(notes.userId, userId), eq(notes.tag, tagName)));
+      
+      // Also remove the custom tag from the custom_tags table
+      await db
+        .delete(customTags)
+        .where(and(eq(customTags.userId, userId), eq(customTags.tagName, tagName)));
+      
       return true;
     } catch {
       return false;

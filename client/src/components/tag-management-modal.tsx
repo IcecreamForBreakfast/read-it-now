@@ -99,10 +99,11 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
         description: "New tag is ready to use for articles.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const errorMessage = error?.message || "Failed to create tag";
       toast({
-        title: "Failed to create tag",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Error",
+        description: errorMessage.includes("already exists") ? "Tag already exists" : errorMessage,
         variant: "destructive",
       });
     },

@@ -416,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const success = await storage.createCustomTag(req.session.userId!, trimmedTagName);
       
       if (!success) {
-        return res.status(500).json({ message: "Failed to create tag" });
+        return res.status(400).json({ message: "Tag already exists" });
       }
       
       res.json({ message: "Tag created successfully", tagName: trimmedTagName });

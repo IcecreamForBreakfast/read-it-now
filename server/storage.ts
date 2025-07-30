@@ -247,13 +247,35 @@ export class DatabaseStorage implements IStorage {
 
   async createCustomTag(userId: string, tagName: string): Promise<boolean> {
     try {
+      // Check if tag already exists (either in custom tags or used in notes)
+      const existingCustomTag = await db
+        .select()
+        .from(customTags)
+        .where(and(eq(customTags.userId, userId), eq(customTags.tagName, tagName)))
+        .limit(1);
+        
+      if (existingCustomTag.length > 0) {
+        return false; // Tag already exists
+      }
+      
+      // Check if tag is already used in notes
+      const existingNoteTag = await db
+        .select()
+        .from(notes)
+        .where(and(eq(notes.userId, userId), eq(notes.tag, tagName)))
+        .limit(1);
+        
+      if (existingNoteTag.length > 0) {
+        return false; // Tag already exists in notes
+      }
+      
+      // Create the tag
       await db.insert(customTags).values({
         userId,
         tagName
       });
       return true;
-    } catch (error) {
-      // Handle duplicate tag error gracefully
+    } catch (error: any) {
       console.error('Error creating custom tag:', error);
       return false;
     }

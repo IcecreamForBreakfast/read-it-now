@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Prototype - Dense Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for three-dot menu */
+        .menu-hidden { display: none; }
+        .menu-visible { display: block; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header with darker background -->
+    <header class="bg-slate-800 text-white p-3 shadow-lg">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-lg font-semibold">Read It Now</h1>
+            <p class="text-slate-300 text-xs">Your articles</p>
+        </div>
+    </header>
+
+    <!-- Main content with denser spacing -->
+    <main class="max-w-4xl mx-auto p-3 space-y-2">
+        
+        <!-- Card 1: Dense version -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    Inside the Duolingo Company Handbook
+                </h3>
+                
+                <!-- Metadata row with tighter spacing -->
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">blog.duolingo.com</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">&lt; 1h</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            uncertain
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu1')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Three-dot menu -->
+                <div id="menu1" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 2: Dense version -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    Article from nytimes.com
+                </h3>
+                
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">nytimes.com</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">9h</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            personal
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu2')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="menu2" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 3: Dense version with long domain -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    Summer Pasta Salad - Weelicious
+                </h3>
+                
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">click.convertkit-mail2.com</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">4d</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            untagged
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu3')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="menu3" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 4: Dense version with work tag -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    Understanding React Server Components: A Deep Dive
+                </h3>
+                
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">dev.to</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">2d</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            work
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu4')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="menu4" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 5: Dense version -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    The Ultimate Guide to TypeScript in 2025
+                </h3>
+                
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">medium.com</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">1w</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            work
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu5')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="menu5" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 6: Dense version -->
+        <article class="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer relative">
+            <div class="p-3">
+                <h3 class="text-base font-semibold text-slate-800 mb-1.5 line-clamp-2 leading-tight">
+                    Climate Change and Its Effects on Global Agriculture
+                </h3>
+                
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="truncate">nature.com</span>
+                        <span>•</span>
+                        <span class="whitespace-nowrap">3d</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5 ml-2">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            personal
+                        </span>
+                        <button class="text-slate-400 hover:text-slate-600 p-0.5" onclick="toggleMenu('menu6')">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="menu6" class="menu-hidden absolute right-3 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Edit tag</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">Save for reference</button>
+                    <button class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <!-- Footer with darker background -->
+    <footer class="bg-slate-800 text-slate-300 p-3 mt-6">
+        <div class="max-w-4xl mx-auto text-center text-xs">
+            <p>&copy; 2025 Read It Now - Save articles for later</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMenu(menuId) {
+            // Close all other menus
+            document.querySelectorAll('[id^="menu"]').forEach(menu => {
+                if (menu.id !== menuId) {
+                    menu.classList.remove('menu-visible');
+                    menu.classList.add('menu-hidden');
+                }
+            });
+            
+            // Toggle the clicked menu
+            const menu = document.getElementById(menuId);
+            menu.classList.toggle('menu-hidden');
+            menu.classList.toggle('menu-visible');
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('button') && !event.target.closest('[id^="menu"]')) {
+                document.querySelectorAll('[id^="menu"]').forEach(menu => {
+                    menu.classList.remove('menu-visible');
+                    menu.classList.add('menu-hidden');
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

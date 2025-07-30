@@ -5,7 +5,7 @@ import { Bookmark, Trash2, Edit3, Check, X, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Note } from "@shared/schema";
@@ -22,6 +22,17 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
   const [selectedTag, setSelectedTag] = useState(article.tag);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch available tags for the dropdown
+  const { data: availableTags } = useQuery({
+    queryKey: ["/api/tags"],
+    queryFn: async (): Promise<string[]> => {
+      const response = await fetch("/api/tags");
+      if (!response.ok) throw new Error("Failed to fetch tags");
+      return response.json();
+    },
+    enabled: isEditingTag, // Only fetch when editing
+  });
 
   const updateTagMutation = useMutation({
     mutationFn: async (newTag: string) => {
@@ -245,10 +256,11 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="work">work</SelectItem>
-                  <SelectItem value="personal">personal</SelectItem>
-                  <SelectItem value="uncertain">uncertain</SelectItem>
-                  <SelectItem value="untagged">untagged</SelectItem>
+                  {availableTags?.map((tag) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button

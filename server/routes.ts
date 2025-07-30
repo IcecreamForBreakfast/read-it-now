@@ -397,6 +397,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a new custom tag
+  app.post("/api/tags", requireAuth, async (req, res) => {
+    try {
+      const { tagName } = req.body;
+      
+      if (!tagName || typeof tagName !== 'string' || tagName.trim().length === 0) {
+        return res.status(400).json({ message: "Tag name is required" });
+      }
+      
+      const trimmedTagName = tagName.trim().toLowerCase();
+      
+      // Prevent creating reserved tags
+      if (['all', 'untagged', 'work', 'personal', 'uncertain'].includes(trimmedTagName)) {
+        return res.status(400).json({ message: "Cannot create reserved tag names" });
+      }
+      
+      const success = await storage.createCustomTag(req.session.userId!, trimmedTagName);
+      
+      if (!success) {
+        return res.status(500).json({ message: "Failed to create tag" });
+      }
+      
+      res.json({ message: "Tag created successfully", tagName: trimmedTagName });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create tag" });
+    }
+  });
+
   // Get tag usage statistics
   app.get("/api/tags/stats", requireAuth, async (req, res) => {
     try {

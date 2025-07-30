@@ -83,17 +83,11 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
     },
   });
 
-  // Create new tag mutation (simpler approach - just create and keep a note)
+  // Create new tag mutation (add to backend custom tags)
   const createTagMutation = useMutation({
     mutationFn: async (tagName: string) => {
-      // Create a note with the new tag to establish it in the system
-      // User can delete it later if they want
-      await apiRequest("POST", "/api/notes", {
-        title: `${tagName} tag created`,
-        content: `This note was created to establish the "${tagName}" tag. You can delete it or edit it as needed.`,
-        tag: tagName,
-        state: "inbox"
-      });
+      // Just add the tag to the backend custom tags list
+      await apiRequest("POST", "/api/tags", { tagName });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
@@ -102,7 +96,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
       setNewTagName("");
       toast({
         title: "Tag created",
-        description: "New tag created with a sample note. You can now use this tag for other articles.",
+        description: "New tag is ready to use for articles.",
       });
     },
     onError: (error) => {

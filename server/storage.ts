@@ -46,6 +46,8 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // In-memory storage for custom tags per user
+  private customTags: Map<string, Set<string>> = new Map();
   async getUserById(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
@@ -226,17 +228,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTagsByUserId(userId: string): Promise<string[]> {
+    // Get tags from notes
     const result = await db
       .selectDistinct({ tag: notes.tag })
       .from(notes)
       .where(eq(notes.userId, userId));
-    return result.map(r => r.tag);
+    const noteTags = result.map(r => r.tag);
+    
+    // Get custom tags
+    const customTags = Array.from(this.customTags.get(userId) || []);
+    
+    // Combine and deduplicate
+    const allTags = [...new Set([...noteTags, ...customTags])];
+    return allTags;
   }
 
   async createCustomTag(userId: string, tagName: string): Promise<boolean> {
-    // Tags are created implicitly when used, so we don't need to store them separately
-    // This is a no-op since tags are created when articles use them
-    return true;
+    try {
+      if (!this.customTags.has(userId)) {
+        this.customTags.set(userId, new Set());
+      }
+      this.customTags.get(userId)!.add(tagName);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async renameTag(userId: string, oldTag: string, newTag: string): Promise<boolean> {

@@ -83,19 +83,17 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
     },
   });
 
-  // Create new tag mutation (by creating a dummy note with the tag)
+  // Create new tag mutation (simpler approach - just create and keep a note)
   const createTagMutation = useMutation({
     mutationFn: async (tagName: string) => {
-      // Create a temporary note with the new tag, then delete it
-      // This ensures the tag appears in the system
-      const tempNote = await apiRequest("POST", "/api/notes", {
-        title: "temp",
-        content: "temp",
+      // Create a note with the new tag to establish it in the system
+      // User can delete it later if they want
+      await apiRequest("POST", "/api/notes", {
+        title: `${tagName} tag created`,
+        content: `This note was created to establish the "${tagName}" tag. You can delete it or edit it as needed.`,
         tag: tagName,
         state: "inbox"
       });
-      // Delete the temporary note immediately
-      await apiRequest("DELETE", `/api/notes/${(tempNote as any).id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
@@ -104,7 +102,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
       setNewTagName("");
       toast({
         title: "Tag created",
-        description: "New tag is ready to use",
+        description: "New tag created with a sample note. You can now use this tag for other articles.",
       });
     },
     onError: (error) => {

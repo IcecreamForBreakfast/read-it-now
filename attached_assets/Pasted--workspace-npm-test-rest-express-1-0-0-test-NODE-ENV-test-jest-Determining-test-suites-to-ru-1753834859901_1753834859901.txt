@@ -1,0 +1,172 @@
+~/workspace$ npm test
+
+> rest-express@1.0.0 test
+> NODE_ENV=test jest
+
+Determining test suites to run.
+
+
+ RUNS  ...st.ts
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ RUNS  tests/ios-integration.test.ts
+ RUNS  tests/api-contract.test.ts
+ RUNS  tests/auth-working.test.
+ PASS  tests/auth-working.test.ts (24.345 s)
+
+ RUNS  ...st.ts
+ RUNS  ...st.ts
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ FAIL  tests/ios-integration.test.ts (24.866 s)
+
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+  ● iOS Integration Tests › should isolate articles between users
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      214 |       password: 'password123'
+      215 |     });
+    > 216 |     expect(login1Response.status).toBe(200);
+          |                                   ^
+      217 |
+      218 |     // Login user 2
+      219 |     const login2Response = await agent2.post('/api/auth/login').send({
+
+      at tests/ios-integration.test.ts:216:35
+      at fulfilled (tests/ios-integration.test.ts:5:58)
+
+
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+ PASS  tests/api-contract.test.ts (25.321 s)
+
+ RUNS  .../api-contract.test.ts
+ RUNS  ...st.ts
+
+ RUNS  ...st.ts
+
+Test Suites: 1 failed, 2 passed
+ RUNS  ...st.ts
+
+ RUNS  ...st.ts
+
+ RUNS  tests/production-auth.test.ts
+ FAIL  tests/production-auth.test.ts
+
+ RUNS  tests/production-auth.test.ts
+  ● Test suite failed to run
+
+    tests/production-auth.test.ts:3:10 - error TS2459: Module '"../server/routes.js"' declares 'createServer' locally, but it is not exported.
+
+    3 import { createServer } from '../server/routes.js';
+               ~~~~~~~~~~~~
+
+      server/routes.ts:2:10
+        2 import { createServer, type Server } from "http";
+                   ~~~~~~~~~~~~
+        'createServer' is declared here.
+
+
+ RUNS  tests/production-auth.test.ts
+
+
+Test Suites: 2 failed, 2 passed, 4 total
+Tests:       1 failed, 23 passed, 24 total
+Snapshots:   0 total
+Time:        29.831 s
+Ran all test suites.

@@ -1,9 +1,13 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeAll } from '@jest/globals';
 import request from 'supertest';
-import { createServer } from '../server/routes.js';
+import { createTestApp } from '../server/routes';
 
 describe('Production Authentication Validation', () => {
-  const app = createServer();
+  let app: any;
+  
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
 
   it('should allow main user to login with known password', async () => {
     const response = await request(app)

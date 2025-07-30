@@ -58,6 +58,21 @@ function createTestApp() {
     });
   });
 
+  // Login endpoint
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    const user = testUsers.find(u => u.email === email);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    (req.session as any).userId = user.id;
+    res.json({ 
+      user: { id: user.id, email: user.email, token: user.token } 
+    });
+  });
+
   // iOS Save endpoint
   app.post('/api/save/:token', async (req, res) => {
     const { token } = req.params;

@@ -117,6 +117,7 @@ export class DatabaseStorage implements IStorage {
     // Create via notes table but return Article format
     const result = await db.insert(notes).values({
       ...article,
+      title: article.title || 'Untitled Article', // Ensure title is provided
       state: 'saved' // Articles created via old API go to saved state
     }).returning();
     
@@ -171,7 +172,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNote(note: InsertNote & { userId: string }): Promise<Note> {
-    const result = await db.insert(notes).values(note).returning();
+    const result = await db.insert(notes).values({
+      ...note,
+      title: note.title || 'Untitled Note' // Ensure title is provided
+    }).returning();
     return result[0];
   }
 

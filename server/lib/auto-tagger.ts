@@ -137,7 +137,7 @@ export class AutoTagger {
   };
 
   tagArticle(article: Article): TaggingResult {
-    const domain = this.extractDomain(article.url);
+    const domain = article.url ? this.extractDomain(article.url) : '';
     const text = `${article.title} ${article.content || ''}`.toLowerCase();
     
     // Check work rules
@@ -220,7 +220,7 @@ export class AutoTagger {
     // Analyze domain patterns
     articles.forEach(article => {
       if (article.tag === 'work' || article.tag === 'personal') {
-        const domain = this.extractDomain(article.url);
+        const domain = article.url ? this.extractDomain(article.url) : '';
         if (domain && !this.isDomainInRules(domain)) {
           if (!domainCounts[domain]) {
             domainCounts[domain] = { work: 0, personal: 0 };

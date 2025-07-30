@@ -591,3 +591,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// Export for testing
+export async function createTestApp() {
+  const express = require('express');
+  const app = express();
+  
+  // Basic middleware
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  
+  // Register all routes
+  await registerRoutes(app);
+  
+  return app;
+}
+
+// Simple createServer export for backward compatibility
+export { createTestApp as createServer };

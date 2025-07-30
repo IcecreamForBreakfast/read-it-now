@@ -8,7 +8,7 @@ export default {
       useESM: false,
     }],
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/shared/$1',
     '^@server/(.*)$': '<rootDir>/server/$1',
   },

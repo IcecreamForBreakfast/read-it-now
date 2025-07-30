@@ -39,6 +39,10 @@ export interface IStorage {
   
   // Tag operations
   getTagsByUserId(userId: string): Promise<string[]>;
+  createCustomTag(userId: string, tagName: string): Promise<boolean>;
+  renameTag(userId: string, oldTag: string, newTag: string): Promise<boolean>;
+  deleteTag(userId: string, tagName: string): Promise<boolean>;
+  getTagUsageStats(userId: string): Promise<{ tag: string; count: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -227,6 +231,47 @@ export class DatabaseStorage implements IStorage {
       .from(notes)
       .where(eq(notes.userId, userId));
     return result.map(r => r.tag);
+  }
+
+  async createCustomTag(userId: string, tagName: string): Promise<boolean> {
+    // Tags are created implicitly when used, so we don't need to store them separately
+    // This is a no-op since tags are created when articles use them
+    return true;
+  }
+
+  async renameTag(userId: string, oldTag: string, newTag: string): Promise<boolean> {
+    try {
+      await db
+        .update(notes)
+        .set({ tag: newTag, updatedAt: new Date() })
+        .where(and(eq(notes.userId, userId), eq(notes.tag, oldTag)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async deleteTag(userId: string, tagName: string): Promise<boolean> {
+    try {
+      // Set articles with this tag to "untagged"
+      await db
+        .update(notes)
+        .set({ tag: "untagged", updatedAt: new Date() })
+        .where(and(eq(notes.userId, userId), eq(notes.tag, tagName)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getTagUsageStats(userId: string): Promise<{ tag: string; count: number }[]> {
+    const result = await db
+      .select({ tag: notes.tag, count: db.$count(notes.id) })
+      .from(notes)
+      .where(eq(notes.userId, userId))
+      .groupBy(notes.tag);
+    
+    return result.map(r => ({ tag: r.tag, count: r.count }));
   }
 }
 

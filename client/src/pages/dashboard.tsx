@@ -8,6 +8,7 @@ import { ArticleCard } from "@/components/article-card";
 import { SaveInstructionsModal } from "@/components/save-instructions-modal";
 import { PasswordChange } from "@/components/password-change";
 import { AutoTagAnalytics } from "@/components/auto-tag-analytics";
+import { TagManagementModal } from "@/components/tag-management-modal";
 import { useToast } from "@/hooks/use-toast";
 import { Bookmark, Plus, LogOut, HelpCircle, Loader2, Archive, Search, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveUrl, setSaveUrl] = useState("");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showTagManagement, setShowTagManagement] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -266,7 +268,7 @@ export default function Dashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {}} // Static for now
+                onClick={() => setShowTagManagement(true)}
                 className="text-slate-600 hover:text-slate-800"
               >
                 <Settings className="h-4 w-4" />
@@ -439,6 +441,12 @@ export default function Dashboard() {
       <SaveInstructionsModal
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
+      />
+
+      {/* Tag Management Modal */}
+      <TagManagementModal
+        isOpen={showTagManagement}
+        onClose={() => setShowTagManagement(false)}
       />
     </div>
   );

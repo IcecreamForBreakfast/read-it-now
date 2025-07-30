@@ -397,6 +397,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get tag usage statistics
+  app.get("/api/tags/stats", requireAuth, async (req, res) => {
+    try {
+      const stats = await storage.getTagUsageStats(req.session.userId!);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tag statistics" });
+    }
+  });
+
+  // Rename a tag
+  app.patch("/api/tags/:tagName", requireAuth, async (req, res) => {
+    try {
+      const { tagName } = req.params;
+      const { newName } = req.body;
+      
+      if (!newName || typeof newName !== 'string' || newName.trim().length === 0) {
+        return res.status(400).json({ message: "New tag name is required" });
+      }
+      
+      const trimmedNewName = newName.trim().toLowerCase();
+      
+      // Prevent renaming to reserved/existing tags
+      if (['all', 'untagged'].includes(trimmedNewName)) {
+        return res.status(400).json({ message: "Cannot use reserved tag names" });
+      }
+      
+      const success = await storage.renameTag(req.session.userId!, tagName, trimmedNewName);
+      
+      if (!success) {
+        return res.status(500).json({ message: "Failed to rename tag" });
+      }
+      
+      res.json({ message: "Tag renamed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to rename tag" });
+    }
+  });
+
+  // Delete a tag (sets all articles with this tag to "untagged")
+  app.delete("/api/tags/:tagName", requireAuth, async (req, res) => {
+    try {
+      const { tagName } = req.params;
+      
+      // Prevent deletion of reserved tags
+      if (['untagged'].includes(tagName)) {
+        return res.status(400).json({ message: "Cannot delete reserved tags" });
+      }
+      
+      const success = await storage.deleteTag(req.session.userId!, tagName);
+      
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete tag" });
+      }
+      
+      res.json({ message: "Tag deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete tag" });
+    }
+  });
+
   // iOS sharing endpoint
   app.post("/api/save", requireAuth, async (req, res) => {
     try {

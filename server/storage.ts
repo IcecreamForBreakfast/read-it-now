@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { users, notes, articles, type User, type Note, type Article, type InsertUser, type InsertNote, type InsertArticle } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, count } from "drizzle-orm";
 import crypto from "crypto";
 
 const connectionString = process.env.DATABASE_URL;
@@ -266,12 +266,15 @@ export class DatabaseStorage implements IStorage {
 
   async getTagUsageStats(userId: string): Promise<{ tag: string; count: number }[]> {
     const result = await db
-      .select({ tag: notes.tag, count: db.$count(notes.id) })
+      .select({ 
+        tag: notes.tag, 
+        count: count(notes.id)
+      })
       .from(notes)
       .where(eq(notes.userId, userId))
       .groupBy(notes.tag);
     
-    return result.map(r => ({ tag: r.tag, count: r.count }));
+    return result.map(r => ({ tag: r.tag, count: Number(r.count) }));
   }
 }
 

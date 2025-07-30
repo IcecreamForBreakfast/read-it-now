@@ -21,6 +21,8 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
   const queryClient = useQueryClient();
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
 
   // Fetch tag statistics
   const { data: tagStats, isLoading } = useQuery({
@@ -81,6 +83,39 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
     },
   });
 
+  // Create new tag mutation (by creating a dummy note with the tag)
+  const createTagMutation = useMutation({
+    mutationFn: async (tagName: string) => {
+      // Create a temporary note with the new tag, then delete it
+      // This ensures the tag appears in the system
+      const tempNote = await apiRequest("POST", "/api/notes", {
+        title: "temp",
+        content: "temp",
+        tag: tagName,
+        state: "inbox"
+      });
+      // Delete the temporary note immediately
+      await apiRequest("DELETE", `/api/notes/${(tempNote as any).id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tags/stats"] });
+      setIsCreatingNew(false);
+      setNewTagName("");
+      toast({
+        title: "Tag created",
+        description: "New tag is ready to use",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to create tag",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleStartEdit = (tag: string) => {
     setEditingTag(tag);
     setEditValue(tag);
@@ -105,6 +140,40 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
   const handleCancelEdit = () => {
     setEditingTag(null);
     setEditValue("");
+  };
+
+  const handleCreateNew = () => {
+    if (!newTagName.trim()) return;
+    
+    const trimmedName = newTagName.trim().toLowerCase();
+    
+    // Check if tag already exists
+    const existingTags = tagStats?.map(s => s.tag) || [];
+    if (existingTags.includes(trimmedName)) {
+      toast({
+        title: "Tag already exists",
+        description: `The tag "${trimmedName}" already exists`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Prevent creating reserved tags
+    if (['all', 'untagged'].includes(trimmedName)) {
+      toast({
+        title: "Reserved tag name",
+        description: "Cannot create reserved tag names",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createTagMutation.mutate(trimmedName);
+  };
+
+  const handleCancelCreate = () => {
+    setIsCreatingNew(false);
+    setNewTagName("");
   };
 
   const handleDeleteTag = (tag: string) => {
@@ -153,8 +222,54 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
             </div>
           ) : (
             <div className="space-y-2">
+              {/* Create new tag section */}
+              {isCreatingNew ? (
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2 flex-1">
+                    <Input
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      className="h-7 text-sm flex-1 min-w-0"
+                      placeholder="Enter new tag name"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleCreateNew();
+                        if (e.key === "Escape") handleCancelCreate();
+                      }}
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCreateNew}
+                      disabled={createTagMutation.isPending}
+                      className="text-green-600 hover:text-green-700 h-7 w-7 p-0"
+                    >
+                      <Save className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelCreate}
+                      className="text-slate-400 hover:text-slate-600 h-7 w-7 p-0"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setIsCreatingNew(true)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full mb-4 text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Tag
+                </Button>
+              )}
+
               {tagStats
-                .filter(stat => stat.tag !== "untagged") // Hide untagged from management
+                .filter(stat => !['untagged', 'work', 'personal', 'uncertain'].includes(stat.tag)) // Hide default/system tags
                 .sort((a, b) => b.count - a.count) // Sort by usage count
                 .map((stat) => (
                   <div
@@ -229,19 +344,27 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
                   </div>
                 ))}
               
-              {/* Show untagged stats at bottom for reference */}
-              {tagStats.find(stat => stat.tag === "untagged") && (
+              {/* Show system tags at bottom for reference */}
+              {tagStats.filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag)).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        untagged
-                      </span>
-                      <span className="text-sm text-slate-500">
-                        {tagStats.find(stat => stat.tag === "untagged")?.count} article{tagStats.find(stat => stat.tag === "untagged")?.count !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <span className="text-xs text-slate-400">Default tag</span>
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">System Tags (Read-only)</h4>
+                  <div className="space-y-2">
+                    {tagStats
+                      .filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag))
+                      .sort((a, b) => b.count - a.count)
+                      .map((stat) => (
+                        <div key={stat.tag} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center space-x-3">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(stat.tag)}`}>
+                              {stat.tag}
+                            </span>
+                            <span className="text-sm text-slate-500">
+                              {stat.count} article{stat.count !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <span className="text-xs text-slate-400">Auto-managed</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}

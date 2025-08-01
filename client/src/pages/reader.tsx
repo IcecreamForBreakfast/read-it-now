@@ -1,11 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Share, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Share, Trash2, Loader2, ExternalLink, Bookmark, Check, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import type { Note } from "@shared/schema";
@@ -16,6 +17,8 @@ export default function ReaderPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+  const [annotation, setAnnotation] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -59,6 +62,53 @@ export default function ReaderPage() {
     },
   });
 
+  const saveForReferenceMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", `/api/notes/${id}/state`, { state: "saved" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
+      toast({
+        title: "Saved for reference",
+        description: "Article has been saved to your reference collection",
+      });
+      // Show annotation form after successful save
+      setShowAnnotationForm(true);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to save",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addAnnotationMutation = useMutation({
+    mutationFn: async (annotationText: string) => {
+      return await apiRequest("POST", `/api/notes/${id}/annotations`, { 
+        text: annotationText 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
+      toast({
+        title: "Annotation added",
+        description: "Your note has been saved",
+      });
+      setShowAnnotationForm(false);
+      setAnnotation("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add annotation",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleBack = () => {
     setLocation("/dashboard");
   };
@@ -86,6 +136,24 @@ export default function ReaderPage() {
     if (confirm("Are you sure you want to delete this article?")) {
       deleteArticleMutation.mutate(article.id);
     }
+  };
+
+  const handleSaveForReference = () => {
+    if (!article) return;
+    saveForReferenceMutation.mutate();
+  };
+
+  const handleSaveAnnotation = () => {
+    if (!annotation.trim()) {
+      setShowAnnotationForm(false);
+      return;
+    }
+    addAnnotationMutation.mutate(annotation.trim());
+  };
+
+  const handleCancelAnnotation = () => {
+    setAnnotation("");
+    setShowAnnotationForm(false);
   };
 
   const getTagColor = (tag: string) => {
@@ -213,6 +281,82 @@ export default function ReaderPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Floating Toolbar - only show for inbox articles */}
+      {article.state === 'inbox' && (
+        <div className="fixed bottom-6 right-6 z-50">
+          {showAnnotationForm ? (
+            // Annotation form that appears after saving
+            <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-4 w-80 mb-4">
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  What do you want to remember?
+                </label>
+                <Textarea
+                  value={annotation}
+                  onChange={(e) => setAnnotation(e.target.value)}
+                  placeholder="Add your thoughts, insights, or key takeaways..."
+                  className="resize-none"
+                  rows={3}
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelAnnotation}
+                  disabled={addAnnotationMutation.isPending}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Skip
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveAnnotation}
+                  disabled={addAnnotationMutation.isPending}
+                >
+                  {addAnnotationMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-1" />
+                  )}
+                  Save
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          
+          {/* Action buttons */}
+          <div className="flex space-x-3">
+            <Button
+              onClick={handleSaveForReference}
+              disabled={saveForReferenceMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+              size="lg"
+            >
+              {saveForReferenceMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={deleteArticleMutation.isPending}
+              variant="outline"
+              className="bg-white hover:bg-red-50 border-red-200 text-red-600 hover:text-red-700 shadow-lg"
+              size="lg"
+            >
+              {deleteArticleMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Trash2 className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -94,10 +94,7 @@ export default function ReaderPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
-      toast({
-        title: "Saved with annotation",
-        description: "Article and your note have been saved to reference collection",
-      });
+      // No toast needed - user already saw "✓ Saved!" in the modal
       setShowAnnotationForm(false);
       setShowFloatingToolbar(false);
       setAnnotation("");

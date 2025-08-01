@@ -69,11 +69,7 @@ export default function ReaderPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
-      toast({
-        title: "Saved for reference",
-        description: "Article has been saved to your reference collection",
-      });
-      // Show annotation form after successful save
+      // Show annotation form immediately without toast - success message will be in form header
       setShowAnnotationForm(true);
     },
     onError: (error) => {
@@ -94,8 +90,8 @@ export default function ReaderPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
       toast({
-        title: "Annotation added",
-        description: "Your note has been saved",
+        title: "Saved with annotation",
+        description: "Article and your note have been saved to reference collection",
       });
       setShowAnnotationForm(false);
       setAnnotation("");
@@ -154,6 +150,11 @@ export default function ReaderPage() {
   const handleCancelAnnotation = () => {
     setAnnotation("");
     setShowAnnotationForm(false);
+    // Show success toast when skipping annotation
+    toast({
+      title: "Saved for reference",
+      description: "Article has been saved to your reference collection",
+    });
   };
 
   const getTagColor = (tag: string) => {
@@ -289,6 +290,10 @@ export default function ReaderPage() {
             // Annotation form that appears after saving
             <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-4 w-80 mb-4">
               <div className="mb-3">
+                <div className="flex items-center mb-2">
+                  <Check className="h-4 w-4 text-green-600 mr-2" />
+                  <span className="text-sm font-medium text-green-700">Saved!</span>
+                </div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   What do you want to remember?
                 </label>

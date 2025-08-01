@@ -19,6 +19,7 @@ export default function ReaderPage() {
   const queryClient = useQueryClient();
   const [showAnnotationForm, setShowAnnotationForm] = useState(false);
   const [annotation, setAnnotation] = useState("");
+  const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -67,10 +68,14 @@ export default function ReaderPage() {
       return await apiRequest("PATCH", `/api/notes/${id}/state`, { state: "saved" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
-      // Show annotation form immediately without toast - success message will be in form header
+      // Keep toolbar visible during annotation flow
+      setShowFloatingToolbar(true);
       setShowAnnotationForm(true);
+      // Delay cache invalidation slightly to prevent flicker
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
+      }, 100);
     },
     onError: (error) => {
       toast({
@@ -94,6 +99,7 @@ export default function ReaderPage() {
         description: "Article and your note have been saved to reference collection",
       });
       setShowAnnotationForm(false);
+      setShowFloatingToolbar(false);
       setAnnotation("");
     },
     onError: (error) => {
@@ -150,6 +156,7 @@ export default function ReaderPage() {
   const handleCancelAnnotation = () => {
     setAnnotation("");
     setShowAnnotationForm(false);
+    setShowFloatingToolbar(false);
     // Show success toast when skipping annotation
     toast({
       title: "Saved for reference",
@@ -283,8 +290,8 @@ export default function ReaderPage() {
         </Card>
       </div>
 
-      {/* Floating Toolbar - only show for inbox articles */}
-      {article.state === 'inbox' && (
+      {/* Floating Toolbar - show for inbox articles or during annotation flow */}
+      {(article.state === 'inbox' || showFloatingToolbar) && (
         <div className="fixed bottom-6 right-6 z-50">
           {showAnnotationForm ? (
             // Annotation form that appears after saving
@@ -332,34 +339,36 @@ export default function ReaderPage() {
             </div>
           ) : null}
           
-          {/* Action buttons */}
-          <div className="flex space-x-3">
-            <Button
-              onClick={handleSaveForReference}
-              disabled={saveForReferenceMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-              size="lg"
-            >
-              {saveForReferenceMutation.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Bookmark className="h-5 w-5" />
-              )}
-            </Button>
-            <Button
-              onClick={handleDelete}
-              disabled={deleteArticleMutation.isPending}
-              variant="outline"
-              className="bg-white hover:bg-red-50 border-red-200 text-red-600 hover:text-red-700 shadow-lg"
-              size="lg"
-            >
-              {deleteArticleMutation.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Trash2 className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
+          {/* Action buttons - only show if not in annotation flow */}
+          {!showAnnotationForm && (
+            <div className="flex space-x-3">
+              <Button
+                onClick={handleSaveForReference}
+                disabled={saveForReferenceMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                size="lg"
+              >
+                {saveForReferenceMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Bookmark className="h-5 w-5" />
+                )}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={deleteArticleMutation.isPending}
+                variant="outline"
+                className="bg-white hover:bg-red-50 border-red-200 text-red-600 hover:text-red-700 shadow-lg"
+                size="lg"
+              >
+                {deleteArticleMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

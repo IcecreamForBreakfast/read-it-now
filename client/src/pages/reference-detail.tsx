@@ -302,16 +302,28 @@ export default function ReferenceDetail() {
 
         {/* Article Content */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Article Content</h2>
-          <div className="prose max-w-none">
+          <div className="prose prose-slate prose-lg max-w-none">
             {note.content ? (
-              <div 
-                className="text-slate-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: note.content.replace(/\n/g, '<br>') }}
-              />
+              <div className="text-slate-700 leading-relaxed">
+                {note.content.split('\n\n').map((paragraph: string, index: number) => (
+                  <p key={index} className="mb-4 text-base leading-7">
+                    {paragraph.trim()}
+                  </p>
+                ))}
+              </div>
             ) : (
-              <div className="text-slate-500 italic">
-                No content available for this article.
+              <div className="text-center py-8 text-slate-500">
+                <p>Article content could not be extracted.</p>
+                <p className="mt-2">
+                  <a
+                    href={note.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 underline"
+                  >
+                    View the original article
+                  </a>
+                </p>
               </div>
             )}
           </div>

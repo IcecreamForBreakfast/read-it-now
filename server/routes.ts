@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: articleContent.title,
         domain,
         content: articleContent.content,
-        tag: taggingResult.tag,
+        tag: taggingResult.tag || '', // Convert null to empty string for database compatibility
         state: 'inbox' // iOS articles go to inbox for review
       });
       
@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           domain,
           content: articleContent.content,
           annotation: noteData.annotation,
-          tag: taggingResult.tag,
+          tag: taggingResult.tag || '', // Convert null to empty string for database compatibility
           state: noteData.state || 'inbox'
         });
         

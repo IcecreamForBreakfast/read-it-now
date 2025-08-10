@@ -74,6 +74,7 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Database Migration Complete**: All 10 "uncertain" tagged articles successfully retagged (9 now untagged, 1 reclassified as personal)
 - ✅ **Tag Display Fix**: Empty tag names now properly display as "Untagged" in tag filter pills instead of blank labels
 - ✅ **Binary Classification Active**: System eliminates ambiguous "uncertain" category, providing clear work/personal classification or leaving articles untagged
+- ✅ **Critical Database Fix**: Fixed null tag constraint violation preventing article saves - AutoTagger null returns now convert to empty strings
 
 ## User Preferences
 

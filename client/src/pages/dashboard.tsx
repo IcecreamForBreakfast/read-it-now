@@ -315,7 +315,7 @@ export default function Dashboard() {
                     }
                   `}
                 >
-                  {tag === "all" ? "All Articles" : tag}
+                  {tag === "all" ? "All Articles" : tag === "" ? "Untagged" : tag}
                   {tag !== "all" && (
                     <span className="ml-1 opacity-70">
                       {notes.filter((note: Note) => note.tag === tag).length}

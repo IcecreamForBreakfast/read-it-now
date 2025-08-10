@@ -5,9 +5,10 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Edit3, Save, Share2, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit3, Save, Share, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Note } from "@shared/schema";
 
 export default function ReferenceDetail() {
@@ -158,56 +159,38 @@ export default function ReferenceDetail() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        {/* Header Navigation */}
+        <div className="flex items-center justify-between mb-3">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation("/dashboard?view=reference")}
+            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Reference
+          </Button>
+          <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => setLocation("/dashboard?view=reference")}
-              className="text-slate-600 hover:text-slate-800"
+              onClick={handleShare}
+              className="text-slate-600 hover:text-slate-800 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Reference
+              <Share className="h-4 w-4" />
             </Button>
-
-            <div className="flex items-center space-x-2">
-              {note.url && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(note.url, '_blank')}
-                  className="text-slate-600 hover:text-slate-800"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShare}
-                className="text-slate-600 hover:text-slate-800"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteNoteMutation.isPending}
-                className="text-slate-600 hover:text-red-600"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              onClick={handleDelete}
+              disabled={deleteNoteMutation.isPending}
+              className="text-slate-600 hover:text-red-600 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {/* Article Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-2">
+        <Card className="mb-2">
+          <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getTagColor(note.tag)}`}>
               {note.tag}
@@ -230,10 +213,12 @@ export default function ReferenceDetail() {
               <ExternalLink className="ml-1 h-3 w-3" />
             </a>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Annotation Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-2">
+        <Card className="mb-2">
+          <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-semibold text-slate-800">Your Notes</h2>
             {!isEditingAnnotation && (
@@ -298,10 +283,12 @@ export default function ReferenceDetail() {
               )}
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Article Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+        <Card>
+          <CardContent className="p-3">
           <div className="prose prose-slate prose-lg max-w-none">
             {note.content ? (
               <div className="text-slate-700 leading-relaxed">
@@ -327,8 +314,9 @@ export default function ReferenceDetail() {
               </div>
             )}
           </div>
-        </div>
-      </main>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

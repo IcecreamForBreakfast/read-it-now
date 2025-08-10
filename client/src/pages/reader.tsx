@@ -262,7 +262,7 @@ export default function ReaderPage() {
               {article.content ? (
                 <div className="text-slate-700 leading-relaxed">
                   {article.content.split('\n\n').map((paragraph: string, index: number) => (
-                    <p key={index} className="mb-4 text-base leading-7">
+                    <p key={index} className="mb-6 text-lg leading-8">
                       {paragraph.trim()}
                     </p>
                   ))}

@@ -248,51 +248,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Batch retag existing notes endpoint
-  app.post("/api/auto-tag/retag-existing", requireAuth, async (req, res) => {
-    try {
-      const notes = await storage.getNotesByUserId(req.session.userId!);
-      const untaggedNotes = notes.filter(note => 
-        note.tag === 'untagged' || !note.tag
-      );
+  // COMMENTED OUT: Retag existing articles API endpoint
+  // app.post("/api/auto-tag/retag-existing", requireAuth, async (req, res) => {
+  //   try {
+  //     const notes = await storage.getNotesByUserId(req.session.userId!);
+  //     const untaggedNotes = notes.filter(note => 
+  //       note.tag === 'untagged' || !note.tag
+  //     );
 
-      let updated = 0;
-      const results = [];
+  //     let updated = 0;
+  //     const results = [];
 
-      for (const note of untaggedNotes) {
-        const taggingResult = autoTagger.tagArticle(note);
+  //     for (const note of untaggedNotes) {
+  //       const taggingResult = autoTagger.tagArticle(note);
         
-        if (taggingResult.tag !== 'untagged') {
-          const updatedNote = await storage.updateNoteTag(
-            note.id, 
-            req.session.userId!, 
-            taggingResult.tag
-          );
+  //       if (taggingResult.tag !== 'untagged') {
+  //         const updatedNote = await storage.updateNoteTag(
+  //           note.id, 
+  //           req.session.userId!, 
+  //           taggingResult.tag
+  //         );
           
-          if (updatedNote) {
-            updated++;
-            results.push({
-              id: note.id,
-              title: note.title,
-              oldTag: note.tag,
-              newTag: taggingResult.tag,
-              confidence: taggingResult.confidence,
-              reasons: taggingResult.reasons
-            });
-          }
-        }
-      }
+  //         if (updatedNote) {
+  //           updated++;
+  //           results.push({
+  //             id: note.id,
+  //             title: note.title,
+  //             oldTag: note.tag,
+  //             newTag: taggingResult.tag,
+  //             confidence: taggingResult.confidence,
+  //             reasons: taggingResult.reasons
+  //           });
+  //         }
+  //       }
+  //     }
 
-      res.json({
-        message: `Successfully retagged ${updated} notes`,
-        totalProcessed: untaggedNotes.length,
-        updated,
-        results
-      });
-    } catch (error) {
-      console.error('Error retagging notes:', error);
-      res.status(500).json({ message: "Failed to retag notes" });
-    }
-  });
+  //     res.json({
+  //       message: `Successfully retagged ${updated} notes`,
+  //       totalProcessed: untaggedNotes.length,
+  //       updated,
+  //       results
+  //     });
+  //   } catch (error) {
+  //     console.error('Error retagging notes:', error);
+  //     res.status(500).json({ message: "Failed to retag notes" });
+  //   }
+  // });
 
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {

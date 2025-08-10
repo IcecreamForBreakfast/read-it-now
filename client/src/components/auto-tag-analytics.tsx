@@ -58,28 +58,29 @@ export function AutoTagAnalytics() {
     },
   });
 
-  const retagExistingMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/auto-tag/retag-existing", {});
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auto-tag/analytics"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
-      toast({
-        title: "Articles retagged",
-        description: `${data.message}. ${data.updated} articles updated.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to retag articles",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    },
-  });
+  // COMMENTED OUT: Retag existing articles feature
+  // const retagExistingMutation = useMutation({
+  //   mutationFn: async () => {
+  //     const response = await apiRequest("POST", "/api/auto-tag/retag-existing", {});
+  //     return response.json();
+  //   },
+  //   onSuccess: (data) => {
+  //     queryClient.invalidateQueries({ queryKey: ["/api/auto-tag/analytics"] });
+  //     queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+  //     queryClient.invalidateQueries({ queryKey: ["/api/tags"] });
+  //     toast({
+  //       title: "Articles retagged",
+  //       description: `${data.message}. ${data.updated} articles updated.`,
+  //     });
+  //   },
+  //   onError: (error) => {
+  //     toast({
+  //       title: "Failed to retag articles",
+  //       description: error instanceof Error ? error.message : "An error occurred",
+  //       variant: "destructive",
+  //     });
+  //   },
+  // });
 
   const dismissSuggestion = (suggestionId: string) => {
     setDismissedSuggestions(prev => [...prev, suggestionId]);
@@ -231,8 +232,8 @@ export function AutoTagAnalytics() {
                   </div>
                 </div>
 
-                {/* Batch Retag Action */}
-                <div>
+                {/* COMMENTED OUT: Batch Retag Action */}
+                {/* <div>
                   <h4 className="font-medium text-slate-800 mb-3">Actions</h4>
                   <Button
                     onClick={() => retagExistingMutation.mutate()}
@@ -255,7 +256,7 @@ export function AutoTagAnalytics() {
                   <p className="text-xs text-slate-500 mt-2">
                     This will apply auto-tagging to all existing articles that are currently untagged.
                   </p>
-                </div>
+                </div> */}
               </div>
             )}
           </CardContent>

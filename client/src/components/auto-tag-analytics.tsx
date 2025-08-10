@@ -12,7 +12,7 @@ interface TaggingStats {
   totalArticles: number;
   workCount: number;
   personalCount: number;
-  uncertainCount: number;
+  untaggedCount: number;
   suggestions: TaggingSuggestion[];
 }
 
@@ -138,9 +138,9 @@ export function AutoTagAnalytics() {
                       <div className="text-2xl font-bold text-green-600">{stats.personalCount}</div>
                       <div className="text-sm text-green-800">Personal</div>
                     </div>
-                    <div className="bg-amber-50 rounded-lg p-3 text-center">
-                      <div className="text-2xl font-bold text-amber-600">{stats.uncertainCount}</div>
-                      <div className="text-sm text-amber-800">Uncertain</div>
+                    <div className="bg-gray-50 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-gray-600">{stats.untaggedCount}</div>
+                      <div className="text-sm text-gray-800">Untagged</div>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-3 text-center">
                       <div className="text-2xl font-bold text-slate-600">{stats.totalArticles}</div>
@@ -220,11 +220,11 @@ export function AutoTagAnalytics() {
                           : 0}%
                       </span>
                     </div>
-                    {stats.uncertainCount > 0 && (
+                    {stats.untaggedCount > 0 && (
                       <div className="flex items-center justify-between">
-                        <span>Needs review:</span>
-                        <span className="font-medium text-amber-600">
-                          {stats.uncertainCount} articles
+                        <span>Untagged:</span>
+                        <span className="font-medium text-gray-600">
+                          {stats.untaggedCount} articles
                         </span>
                       </div>
                     )}

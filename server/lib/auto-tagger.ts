@@ -21,7 +21,7 @@ export interface TaggingStats {
   totalArticles: number;
   workCount: number;
   personalCount: number;
-  uncertainCount: number;
+  untaggedCount: number;
   suggestions: TaggingSuggestion[];
 }
 
@@ -207,7 +207,7 @@ export class AutoTagger {
   generateAnalytics(articles: Article[]): TaggingStats {
     const workCount = articles.filter(a => a.tag === 'work').length;
     const personalCount = articles.filter(a => a.tag === 'personal').length;
-    const uncertainCount = articles.filter(a => a.tag === 'uncertain').length;
+    const untaggedCount = articles.filter(a => !a.tag || a.tag === '').length;
     
     const suggestions = this.generateSuggestions(articles);
     
@@ -215,7 +215,7 @@ export class AutoTagger {
       totalArticles: articles.length,
       workCount,
       personalCount,
-      uncertainCount,
+      untaggedCount,
       suggestions
     };
   }

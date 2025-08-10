@@ -12,7 +12,7 @@ export interface TaggingRules {
 }
 
 export interface TaggingResult {
-  tag: string;
+  tag: string | null;
   confidence: 'high' | 'medium' | 'low';
   reasons: string[];
 }
@@ -156,10 +156,18 @@ export class AutoTagger {
         confidence: personalReasons.length >= 2 ? 'high' : 'medium',
         reasons: personalReasons
       };
+    } else if (workReasons.length === personalReasons.length && workReasons.length > 0) {
+      // Equal indicators found - return null tag
+      return {
+        tag: null,
+        confidence: 'low',
+        reasons: ['Equal work and personal indicators found']
+      };
     }
     
+    // No clear indicators - return null tag
     return {
-      tag: 'uncertain',
+      tag: null,
       confidence: 'low',
       reasons: ['No clear work or personal indicators found']
     };

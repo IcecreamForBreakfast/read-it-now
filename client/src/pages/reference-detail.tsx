@@ -208,20 +208,27 @@ export default function ReferenceDetail() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         {/* Article Header */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-2">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2 leading-tight">
-            {note.title}
-          </h1>
-          
-          <div className="flex items-center space-x-4 text-sm text-slate-600 mb-2">
-            {note.domain && (
-              <span className="font-medium">{note.domain}</span>
-            )}
-            <span>•</span>
-            <span>Saved {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}</span>
-            <span>•</span>
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(note.tag)}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getTagColor(note.tag)}`}>
               {note.tag}
             </span>
+            <div className="text-sm text-slate-500">
+              Saved {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">{note.title}</h1>
+          <div className="flex items-center text-sm text-slate-600">
+            <span>{note.domain}</span>
+            <span className="mx-2">•</span>
+            <a
+              href={note.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-primary transition-colors flex items-center"
+            >
+              View Original
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </a>
           </div>
         </div>
 

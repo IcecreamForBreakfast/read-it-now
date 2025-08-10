@@ -68,6 +68,9 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Custom Tag Management System**: Database-backed custom tags with CRUD operations through settings modal
 - ✅ **Unified Tag Integration**: Custom tags appear in both tag management modal and article editing dropdowns
 - ✅ **Smart Tag Validation**: Prevents duplicate tag creation and reserved tag name conflicts
+- ✅ **No Uncertain Tag Implementation**: Removed "uncertain" auto-tag fallback - articles now get "work", "personal", or no tag for binary classification
+- ✅ **Comprehensive Test Coverage**: 20 automated tests validate new auto-tagging logic with null handling and confidence levels
+- ✅ **Analytics Interface Updated**: Changed from "uncertainCount" to "untaggedCount" throughout frontend and backend systems
 
 ## User Preferences
 

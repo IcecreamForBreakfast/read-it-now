@@ -26,7 +26,7 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
   // Fetch available tags for the dropdown
   const { data: availableTags } = useQuery({
     queryKey: ["/api/tags"],
-    queryFn: async (): Promise<string[]> => {
+    queryFn: async (): Promise<{ tag: string; count: number }[]> => {
       const response = await fetch("/api/tags");
       if (!response.ok) throw new Error("Failed to fetch tags");
       return response.json();
@@ -256,9 +256,9 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTags?.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
-                      {tag}
+                  {availableTags?.map((tagData) => (
+                    <SelectItem key={tagData.tag} value={tagData.tag}>
+                      {tagData.tag || "Untagged"} ({tagData.count})
                     </SelectItem>
                   ))}
                 </SelectContent>

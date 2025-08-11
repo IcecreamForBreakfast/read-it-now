@@ -391,9 +391,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tags", requireAuth, async (req, res) => {
     try {
-      const tags = await storage.getTagsByUserId(req.session.userId!);
-      res.json(tags);
+      // Get tag usage stats instead of just tag names
+      const tagStats = await storage.getTagUsageStats(req.session.userId!);
+      
+      // Get all tags (including custom tags with no notes) to ensure we don't miss any
+      const allTagNames = await storage.getTagsByUserId(req.session.userId!);
+      
+      // Combine tag stats with unused tags (0 count for unused tags)
+      const allTags = [...tagStats];
+      for (const tagName of allTagNames) {
+        if (!tagStats.find(t => t.tag === tagName)) {
+          allTags.push({ tag: tagName, count: 0 });
+        }
+      }
+      
+      // Sort by count (descending), then alphabetically for ties
+      allTags.sort((a, b) => {
+        if (a.count !== b.count) {
+          return b.count - a.count; // Higher count first
+        }
+        return a.tag.localeCompare(b.tag); // Alphabetical for ties
+      });
+      
+      res.json(allTags);
     } catch (error) {
+      console.error('Error fetching tags with counts:', error);
       res.status(500).json({ message: "Failed to fetch tags" });
     }
   });

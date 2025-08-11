@@ -27,7 +27,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
   // Fetch all tags
   const { data: allTags } = useQuery({
     queryKey: ["/api/tags"],
-    queryFn: async (): Promise<string[]> => {
+    queryFn: async (): Promise<{ tag: string; count: number }[]> => {
       const response = await fetch("/api/tags");
       if (!response.ok) throw new Error("Failed to fetch tags");
       return response.json();
@@ -153,7 +153,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
     
     // Check if tag already exists
     const existingTags = allTags || [];
-    if (existingTags.includes(trimmedName)) {
+    if (existingTags.some(tagData => tagData.tag === trimmedName)) {
       toast({
         title: "Tag already exists",
         description: `The tag "${trimmedName}" already exists`,
@@ -273,22 +273,15 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
               )}
 
               {allTags && allTags
-                .filter(tag => !['untagged', 'work', 'personal', 'uncertain'].includes(tag)) // Hide default/system tags  
-                .sort((a, b) => {
-                  // Get counts from tagStats and sort by usage (undefined counts go to end)
-                  const aCount = tagStats?.find(s => s.tag === a)?.count || 0;
-                  const bCount = tagStats?.find(s => s.tag === b)?.count || 0;
-                  return bCount - aCount;
-                })
-                .map((tag) => {
-                  const count = tagStats?.find(s => s.tag === tag)?.count || 0;
+                .filter(tagData => !['untagged', 'work', 'personal', 'uncertain'].includes(tagData.tag)) // Hide default/system tags  
+                .map((tagData) => {
                   return (
                     <div
-                      key={tag}
+                      key={tagData.tag}
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
                     >
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        {editingTag === tag ? (
+                        {editingTag === tagData.tag ? (
                           <div className="flex items-center space-x-2 flex-1">
                             <Input
                               value={editValue}
@@ -321,22 +314,22 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
                           </div>
                         ) : (
                           <>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}>
-                              {tag}
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tagData.tag)}`}>
+                              {tagData.tag}
                             </span>
                             <span className="text-sm text-slate-500 flex-1">
-                              {count} article{count !== 1 ? 's' : ''}
+                              {tagData.count} article{tagData.count !== 1 ? 's' : ''}
                             </span>
                           </>
                         )}
                       </div>
                       
-                      {editingTag !== tag && (
+                      {editingTag !== tagData.tag && (
                         <div className="flex items-center space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleStartEdit(tag)}
+                            onClick={() => handleStartEdit(tagData.tag)}
                             className="text-slate-400 hover:text-slate-600 h-7 w-7 p-0"
                           >
                             <Edit3 className="h-3 w-3" />
@@ -344,7 +337,7 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteTag(tag)}
+                            onClick={() => handleDeleteTag(tagData.tag)}
                             disabled={deleteTagMutation.isPending}
                             className="text-slate-400 hover:text-red-600 h-7 w-7 p-0"
                           >
@@ -357,21 +350,21 @@ export function TagManagementModal({ isOpen, onClose }: TagManagementModalProps)
                 })}
               
               {/* Show system tags at bottom for reference */}
-              {tagStats && tagStats.filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag)).length > 0 && (
+              {allTags && allTags.filter(tagData => ['work', 'personal', 'uncertain', 'untagged'].includes(tagData.tag)).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-200">
                   <h4 className="text-sm font-medium text-slate-600 mb-2">System Tags (Read-only)</h4>
                   <div className="space-y-2">
-                    {tagStats
-                      .filter(stat => ['work', 'personal', 'uncertain', 'untagged'].includes(stat.tag))
+                    {allTags
+                      .filter(tagData => ['work', 'personal', 'uncertain', 'untagged'].includes(tagData.tag))
                       .sort((a, b) => b.count - a.count)
-                      .map((stat) => (
-                        <div key={stat.tag} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      .map((tagData) => (
+                        <div key={tagData.tag} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center space-x-3">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(stat.tag)}`}>
-                              {stat.tag}
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tagData.tag)}`}>
+                              {tagData.tag || "Untagged"}
                             </span>
                             <span className="text-sm text-slate-500">
-                              {stat.count} article{stat.count !== 1 ? 's' : ''}
+                              {tagData.count} article{tagData.count !== 1 ? 's' : ''}
                             </span>
                           </div>
                           <span className="text-xs text-slate-400">Auto-managed</span>

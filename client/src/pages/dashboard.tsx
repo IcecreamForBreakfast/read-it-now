@@ -54,7 +54,7 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const { data: tags = [] } = useQuery({
+  const { data: tags = [] } = useQuery<{ tag: string; count: number }[]>({
     queryKey: ["/api/tags"],
     enabled: !!user,
   });
@@ -205,7 +205,7 @@ export default function Dashboard() {
 
 
 
-  const uniqueTags = ["all", ...Array.from(new Set(tags as string[]))];
+  const uniqueTags = ["all", ...tags.map(tagData => tagData.tag)];
 
   const getTagColor = (tag: string) => {
     if (tag === "all") return "bg-primary text-white";
@@ -318,7 +318,7 @@ export default function Dashboard() {
                   {tag === "all" ? "All Articles" : tag === "" ? "Untagged" : tag}
                   {tag !== "all" && (
                     <span className="ml-1 opacity-70">
-                      {notes.filter((note: Note) => note.tag === tag).length}
+                      {tags.find(tagData => tagData.tag === tag)?.count || 0}
                     </span>
                   )}
                 </Button>

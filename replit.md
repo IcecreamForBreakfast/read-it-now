@@ -80,6 +80,11 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 
 Preferred communication style: Simple, everyday language.
 
+## Project Guidelines
+- Follow standards in `CODING_STANDARDS.md` for consistent code quality
+- Use process outlined in `WORKFLOW_PROCESS.md` for change management  
+- Apply checklist from `DEBUGGING_CHECKLIST.md` when troubleshooting issues
+
 ## Next Session Reminders
 - ✅ Git repository updated - all latest code pushed to GitHub
 - ✅ Render deployment configuration complete - ready for production deployment

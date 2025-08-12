@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { Bookmark, Trash2, Edit3, Check, X, MoreVertical } from "lucide-react";
+import { Bookmark, Trash2, Edit3, Check, X, MoreVertical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,8 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
   const [, setLocation] = useLocation();
   const [isEditingTag, setIsEditingTag] = useState(false);
   const [selectedTag, setSelectedTag] = useState(article.tag);
+  const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+  const [annotation, setAnnotation] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,11 +67,12 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      toast({
-        title: "Saved for reference",
-        description: "Article has been saved to your reference collection",
-      });
+      // Show annotation form immediately after saving
+      setShowAnnotationForm(true);
+      // Delay cache invalidation slightly to prevent flicker
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      }, 100);
       if (onSaveForReference) {
         onSaveForReference(article.id);
       }
@@ -82,8 +86,33 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
     },
   });
 
+  const addAnnotationMutation = useMutation({
+    mutationFn: async (annotationText: string) => {
+      return await apiRequest("POST", `/api/notes/${article.id}/annotations`, { 
+        text: annotationText 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", article.id] });
+      setShowAnnotationForm(false);
+      setAnnotation("");
+      toast({
+        title: "Annotation saved",
+        description: "Your thoughts have been saved with this article",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add annotation",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCardClick = () => {
-    if (!isEditingTag) {
+    if (!isEditingTag && !showAnnotationForm) {
       // Navigate to appropriate view based on article state
       if (article.state === "saved") {
         setLocation(`/reference/${article.id}`);
@@ -121,6 +150,30 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
   const handleSaveForReference = (e: React.MouseEvent) => {
     e.stopPropagation();
     saveForReferenceMutation.mutate();
+  };
+
+  const handleSaveAnnotation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (annotation.trim()) {
+      addAnnotationMutation.mutate(annotation.trim());
+    } else {
+      // If no annotation, just close the form
+      setShowAnnotationForm(false);
+      toast({
+        title: "Saved for reference",
+        description: "Article has been saved to your reference collection",
+      });
+    }
+  };
+
+  const handleCancelAnnotation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowAnnotationForm(false);
+    setAnnotation("");
+    toast({
+      title: "Saved for reference",
+      description: "Article has been saved to your reference collection",
+    });
   };
 
   const getTagColor = (tag: string) => {
@@ -284,6 +337,53 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
           </div>
         )}
       </div>
+
+      {/* Annotation form - appears below the card after saving */}
+      {showAnnotationForm && (
+        <div className="bg-white border border-slate-200 rounded-b-lg shadow-lg p-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="mb-3">
+            <div className="flex items-center mb-2">
+              <Check className="h-4 w-4 text-green-600 mr-2" />
+              <span className="text-sm font-medium text-green-700">Saved!</span>
+            </div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              What do you want to remember?
+            </label>
+            <Textarea
+              value={annotation}
+              onChange={(e) => setAnnotation(e.target.value)}
+              placeholder="Add your thoughts, insights, or key takeaways..."
+              className="resize-none"
+              rows={3}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancelAnnotation}
+              disabled={addAnnotationMutation.isPending}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Skip
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveAnnotation}
+              disabled={addAnnotationMutation.isPending}
+            >
+              {addAnnotationMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4 mr-1" />
+              )}
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

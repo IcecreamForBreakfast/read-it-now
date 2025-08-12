@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { Bookmark, Trash2, Edit3, Check, X, MoreVertical, Loader2 } from "lucide-react";
@@ -25,6 +25,33 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
   const [annotation, setAnnotation] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Handle smooth scrolling when annotation form appears
+  useEffect(() => {
+    if (showAnnotationForm && formRef.current) {
+      // Small delay to allow the form to render
+      setTimeout(() => {
+        if (formRef.current) {
+          // Scroll the form into view with offset for header
+          const headerHeight = 120; // Account for sticky header
+          const elementTop = formRef.current.getBoundingClientRect().top + window.pageYOffset;
+          const offsetTop = elementTop - headerHeight;
+          
+          window.scrollTo({
+            top: Math.max(0, offsetTop),
+            behavior: 'smooth'
+          });
+          
+          // Focus the textarea after scrolling
+          setTimeout(() => {
+            textareaRef.current?.focus();
+          }, 300);
+        }
+      }, 100);
+    }
+  }, [showAnnotationForm]);
 
   // Fetch available tags for the dropdown
   const { data: availableTags } = useQuery({
@@ -341,7 +368,10 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
 
       {/* Annotation form - appears below the card after saving */}
       {showAnnotationForm && (
-        <div className="bg-white border border-slate-200 rounded-b-lg shadow-lg p-4 animate-in slide-in-from-top-2 duration-200">
+        <div 
+          ref={formRef}
+          className="bg-white border border-slate-200 rounded-b-lg shadow-lg p-4 animate-in slide-in-from-top-2 duration-200"
+        >
           <div className="mb-3">
             <div className="flex items-center mb-2">
               <Check className="h-4 w-4 text-green-600 mr-2" />
@@ -351,12 +381,12 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
               What do you want to remember?
             </label>
             <Textarea
+              ref={textareaRef}
               value={annotation}
               onChange={(e) => setAnnotation(e.target.value)}
               placeholder="Add your thoughts, insights, or key takeaways..."
               className="resize-none"
               rows={3}
-              autoFocus
               onClick={(e) => e.stopPropagation()}
             />
           </div>

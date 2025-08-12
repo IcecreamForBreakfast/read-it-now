@@ -69,10 +69,7 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
     onSuccess: () => {
       // Show annotation form immediately after saving
       setShowAnnotationForm(true);
-      // Delay cache invalidation slightly to prevent flicker
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      }, 100);
+      // Don't invalidate cache immediately - wait for annotation completion or skip
       if (onSaveForReference) {
         onSaveForReference(article.id);
       }
@@ -157,8 +154,10 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
     if (annotation.trim()) {
       addAnnotationMutation.mutate(annotation.trim());
     } else {
-      // If no annotation, just close the form
+      // If no annotation, just close the form and update cache
       setShowAnnotationForm(false);
+      setAnnotation("");
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       toast({
         title: "Saved for reference",
         description: "Article has been saved to your reference collection",
@@ -170,6 +169,8 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
     e.stopPropagation();
     setShowAnnotationForm(false);
     setAnnotation("");
+    // Now invalidate cache after user action completes
+    queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
     toast({
       title: "Saved for reference",
       description: "Article has been saved to your reference collection",

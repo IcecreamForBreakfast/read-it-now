@@ -75,6 +75,8 @@ This is a personal read-it-later application built as a Pocket replacement. It's
 - ✅ **Tag Display Fix**: Empty tag names now properly display as "Untagged" in tag filter pills instead of blank labels
 - ✅ **Binary Classification Active**: System eliminates ambiguous "uncertain" category, providing clear work/personal classification or leaving articles untagged
 - ✅ **Critical Database Fix**: Fixed null tag constraint violation preventing article saves - AutoTagger null returns now convert to empty strings
+- ✅ **Enhanced Save-for-Reference UX**: Fixed annotation form scroll issues with smart header-aware positioning and smooth focus management
+- ✅ **Streamlined Navigation Flow**: After saving article for reference from detail view, automatically returns to Inbox dashboard for efficient article processing
 
 ## User Preferences
 

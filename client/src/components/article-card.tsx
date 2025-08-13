@@ -125,6 +125,10 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
         title: "Annotation saved",
         description: "Your thoughts have been saved with this article",
       });
+      // Navigate back to inbox if we're on article detail view
+      if (window.location.pathname.includes('/reader/')) {
+        setLocation("/dashboard");
+      }
     },
     onError: (error) => {
       toast({
@@ -189,6 +193,10 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
         title: "Saved for reference",
         description: "Article has been saved to your reference collection",
       });
+      // Navigate back to inbox if we're on article detail view
+      if (window.location.pathname.includes('/reader/')) {
+        setLocation("/dashboard");
+      }
     }
   };
 
@@ -202,6 +210,10 @@ export function ArticleCard({ article, onDelete, onSaveForReference }: ArticleCa
       title: "Saved for reference",
       description: "Article has been saved to your reference collection",
     });
+    // Navigate back to inbox if we're on article detail view
+    if (window.location.pathname.includes('/reader/')) {
+      setLocation("/dashboard");
+    }
   };
 
   const getTagColor = (tag: string) => {

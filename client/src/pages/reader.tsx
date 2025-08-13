@@ -94,10 +94,15 @@ export default function ReaderPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes", id] });
-      // No toast needed - user already saw "✓ Saved!" in the modal
       setShowAnnotationForm(false);
       setShowFloatingToolbar(false);
       setAnnotation("");
+      toast({
+        title: "Annotation saved",
+        description: "Your thoughts have been saved with this article",
+      });
+      // Navigate back to Inbox dashboard after saving
+      setLocation("/dashboard");
     },
     onError: (error) => {
       toast({
@@ -159,6 +164,8 @@ export default function ReaderPage() {
       title: "Saved for reference",
       description: "Article has been saved to your reference collection",
     });
+    // Navigate back to Inbox dashboard after skipping annotation
+    setLocation("/dashboard");
   };
 
   const getTagColor = (tag: string) => {

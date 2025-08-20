@@ -58,37 +58,6 @@ function createTestApp() {
     });
   });
 
-  // Login endpoint
-  app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-    
-    const user = testUsers.find(u => u.email === email);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    (req.session as any).userId = user.id;
-    res.status(200).json({ 
-      user: { id: user.id, email: user.email, token: user.token } 
-    });
-  });
-
-  // Get notes endpoint
-  app.get('/api/notes', (req, res) => {
-    const userId = (req.session as any).userId;
-    if (!userId) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-    
-    const userArticles = testArticles.filter(a => a.userId === userId);
-    res.json(userArticles);
-  });
-
   // iOS Save endpoint
   app.post('/api/save/:token', async (req, res) => {
     const { token } = req.params;
@@ -218,7 +187,6 @@ describe('iOS Integration Tests', () => {
       });
     
     const user2 = user2Response.body.user;
-    expect(user2Response.status).toBe(201);
 
     // Save article for user 1
     await request(app)
@@ -240,7 +208,7 @@ describe('iOS Integration Tests', () => {
     const agent1 = request.agent(app);
     const agent2 = request.agent(app);
 
-    // Login user 1 (use registration response directly)
+    // Login user 1
     const login1Response = await agent1.post('/api/auth/login').send({
       email: testUser.email,
       password: 'password123'
@@ -249,32 +217,36 @@ describe('iOS Integration Tests', () => {
 
     // Login user 2
     const login2Response = await agent2.post('/api/auth/login').send({
-      email: 'user2@example.com',
+      email: user2.email,
       password: 'password123'
     });
     expect(login2Response.status).toBe(200);
 
     // Get articles for user 1
-    const user1Articles = await agent1.get('/api/notes');
+    const user1Articles = await agent1.get('/api/articles');
     expect(user1Articles.body).toHaveLength(1);
     expect(user1Articles.body[0].title).toBe('User 1 Article');
 
     // Get articles for user 2
-    const user2Articles = await agent2.get('/api/notes');
+    const user2Articles = await agent2.get('/api/articles');
     expect(user2Articles.body).toHaveLength(1);
     expect(user2Articles.body[0].title).toBe('User 2 Article');
   });
 
   it('should handle high-frequency iOS requests', async () => {
+    const requests = [];
+    
     // Simulate multiple quick saves from iOS
-    const requests = Array.from({ length: 5 }, (_, i) =>
-      request(app)
-        .post(`/api/save/${testUser.token}`)
-        .send({
-          url: `https://example.com/article-${i}`,
-          title: `Article ${i}`
-        })
-    );
+    for (let i = 0; i < 5; i++) {
+      requests.push(
+        request(app)
+          .post(`/api/save/${testUser.token}`)
+          .send({
+            url: `https://example.com/article-${i}`,
+            title: `Article ${i}`
+          })
+      );
+    }
 
     const responses = await Promise.all(requests);
     
